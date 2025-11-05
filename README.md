@@ -1,6 +1,6 @@
-# Greatt
+# Dither Dog
 
-A modern, interactive web application built with Next.js and React.
+Real-time dithering effect web-based application
 
 ## Features
 
