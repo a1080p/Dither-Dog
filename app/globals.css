@@ -129,6 +129,17 @@ body {
   transform: translateY(-3px) scale(1.02);
 }
 
+.glass-button-primary:focus-visible {
+  outline: 2px solid rgba(255, 107, 53, 0.8);
+  outline-offset: 2px;
+}
+
+.glass-button:focus-visible,
+.glass-panel:focus-visible {
+  outline: 2px solid rgba(255, 107, 53, 0.6);
+  outline-offset: 2px;
+}
+
 .glass-input {
   background: rgba(39, 39, 42, 0.6);
   backdrop-filter: blur(10px) saturate(180%);
@@ -168,8 +179,8 @@ body {
     0 0 50px 10px rgba(255, 107, 53, 0.125),
     0 0 70px 15px rgba(255, 107, 53, 0.075),
     inset 0 0 30px 0 rgba(255, 107, 53, 0.05);
-  border-radius: 0 2rem 2rem 0;
-  margin: 1rem 0 1rem 0;
+  border-radius: 0 0 2rem 0;
+  margin: 0 0 1rem 0;
   padding-right: 4px;
   overflow-anchor: none;
   overscroll-behavior: contain;
@@ -232,12 +243,60 @@ body {
   background-position: 0 0, 1.5px 1.5px, 3px 3px;
 }
 
+/* Slider styling for better accessibility */
+input[type="range"] {
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 1) 0%, rgba(255, 133, 85, 1) 100%);
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.6);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 1) 0%, rgba(255, 133, 85, 1) 100%);
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.6);
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid rgba(255, 107, 53, 0.8);
+  outline-offset: 2px;
+}
+
 /* Prevent inputs from scrolling into view */
 input[type="range"],
 input[type="text"],
 input[type="number"],
 select,
-button {
+button,
+textarea {
   scroll-margin: 0 !important;
   scroll-snap-margin: 0 !important;
 }
@@ -246,7 +305,8 @@ input[type="range"]:focus,
 input[type="text"]:focus,
 input[type="number"]:focus,
 select:focus,
-button:focus {
+button:focus,
+textarea:focus {
   scroll-margin: 0 !important;
   scroll-snap-margin: 0 !important;
 }

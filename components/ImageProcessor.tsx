@@ -515,12 +515,12 @@ export default function ImageProcessor() {
     const inputWidth = Math.max(3, inputValue.length) * 0.6 + 2;
 
     return (
-      <div style={{ marginBottom: '0.5rem', paddingLeft: '20px', paddingRight: '20px' }}>
+      <div style={{ padding: '0 2rem', marginBottom: '0.625rem' }}>
         <div className="glass-panel" style={{
-          padding: '0.75rem',
+          padding: '0.5rem',
           borderRadius: '1rem'
         }}>
-          <div className="flex justify-between items-center" style={{ marginBottom: '0.375rem' }}>
+          <div className="flex justify-between items-center" style={{ marginBottom: '0.1875rem' }}>
             <label className="text-xs font-bold text-white text-left">
               {formattedLabel}
             </label>
@@ -558,8 +558,8 @@ export default function ImageProcessor() {
 
   return (
     <div className="flex h-screen bg-gradient-dark overflow-hidden relative">
-      <aside ref={sidebarRef} className="w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 relative z-10">
-        <div className="py-4 space-y-3">
+      <aside ref={sidebarRef} className="w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 relative z-5">
+        <div style={{ padding: '1rem 0' }}>
           <input
             ref={fileInputRef}
             type="file"
@@ -569,7 +569,8 @@ export default function ImageProcessor() {
             id="file-input"
           />
 
-          <div style={{ paddingLeft: '90px', paddingRight: '90px', paddingTop: '16px' }}>
+          {/* Load Image Button */}
+          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
             <label
               htmlFor="file-input"
               className="block w-full px-4 py-5 glass-button-primary text-white text-lg font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
@@ -578,10 +579,9 @@ export default function ImageProcessor() {
             </label>
           </div>
 
-          <div style={{ height: '1rem' }}></div>
-
-          <div style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-            <label className="block text-xs font-bold text-white mb-2">
+          {/* Dithering Presets */}
+          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+            <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
               Dithering Presets
             </label>
             <select
@@ -591,7 +591,7 @@ export default function ImageProcessor() {
                   applyPreset(e.target.value);
                 }
               }}
-              className="w-full px-8 py-8 text-sm glass-input text-white font-semibold rounded-xl focus:outline-none"
+              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-xl focus:outline-none"
             >
               <option value="">Select A Preset...</option>
               {selectedPreset === 'Custom' && <option value="Custom">Custom</option>}
@@ -603,282 +603,266 @@ export default function ImageProcessor() {
             </select>
           </div>
 
-          <div style={{ height: '1rem' }}></div>
-          <div className="h-px bg-gradient-to-r from-transparent via-[#ff6b35] to-transparent opacity-50" style={{ marginLeft: '20px', marginRight: '20px' }}></div>
-          <div style={{ height: '1rem' }}></div>
+          {/* Effect Type */}
+          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+            <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+              Effect type
+            </label>
+            <select
+              value={params.effect}
+              onChange={(e) => updateParam('effect', e.target.value as ProcessingParams['effect'])}
+              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-xl focus:outline-none"
+            >
+              <option value="none">None</option>
+              <option value="dithering">Dithering</option>
+              <option value="threshold">Threshold</option>
+              <option value="edge-detect">Edge Detection</option>
+            </select>
+          </div>
 
-          <div className="space-y-3">
-            <div style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-              <label className="block text-xs font-bold text-white mb-2">
-                Effect type
-              </label>
-              <select
-                value={params.effect}
-                onChange={(e) => updateParam('effect', e.target.value as ProcessingParams['effect'])}
-                className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-xl focus:outline-none"
-              >
-                <option value="none">None</option>
-                <option value="dithering">Dithering</option>
-                <option value="threshold">Threshold</option>
-                <option value="edge-detect">Edge Detection</option>
-              </select>
-            </div>
+          {/* Invert Button */}
+          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+            <button
+              onClick={() => updateParam('invert', !params.invert)}
+              className={`w-full px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
+                params.invert
+                  ? 'glass-button-primary text-white'
+                  : 'glass-panel text-white/60 hover:text-white'
+              }`}
+            >
+              {params.invert ? 'Invert: On' : 'Invert: Off'}
+            </button>
+          </div>
 
-            <div style={{ height: '1rem' }}></div>
-
-            <div style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-              <label className="block text-xs font-bold text-white mb-2">
-                Color palette
-              </label>
-              <select
-                value={params.colorPalette}
-                onChange={(e) => updateParam('colorPalette', e.target.value as ColorPalette)}
-                className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-xl focus:outline-none"
-              >
-                <option value="full-color">Full Color</option>
-                <optgroup label="Basic">
-                  <option value="black-white">Black & White</option>
-                  <option value="red-black">Red & Black</option>
-                  <option value="blue-white">Blue & White</option>
-                  <option value="green-black">Green & Black</option>
-                </optgroup>
-                <optgroup label="Retro">
-                  <option value="sepia">Sepia</option>
-                  <option value="gameboy">Game Boy</option>
-                  <option value="commodore64">Commodore 64</option>
-                  <option value="amber-crt">Amber CRT</option>
-                  <option value="green-terminal">Green Terminal</option>
-                </optgroup>
-                <optgroup label="Neon">
-                  <option value="cyan-magenta">Cyan & Magenta</option>
-                  <option value="neon-pink">Neon Pink</option>
-                  <option value="electric-blue">Electric Blue</option>
-                  <option value="lime-purple">Lime & Purple</option>
-                  <option value="hot-pink-cyan">Hot Pink & Cyan</option>
-                </optgroup>
-                <optgroup label="Vintage">
-                  <option value="orange-blue">Orange & Blue</option>
-                  <option value="purple-yellow">Purple & Yellow</option>
-                  <option value="teal-orange">Teal & Orange</option>
-                  <option value="burgundy-cream">Burgundy & Cream</option>
-                </optgroup>
-                <optgroup label="Nature">
-                  <option value="forest-green">Forest Green</option>
-                  <option value="ocean-blue">Ocean Blue</option>
-                  <option value="sunset-red">Sunset Red</option>
-                  <option value="lavender-sage">Lavender & Sage</option>
-                </optgroup>
-              </select>
-            </div>
-
-            <div style={{ height: '1rem' }}></div>
-            <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" style={{ marginLeft: '20px', marginRight: '20px' }}></div>
-            <div style={{ height: '1rem' }}></div>
-
-            {params.effect === 'dithering' && (
-              <>
-                <div style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-                  <label className="block text-xs font-bold text-white mb-2">
-                    Dithering algorithm
-                  </label>
+          {/* Color Palette */}
+          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+            <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+              Color palette
+            </label>
                   <select
-                    value={params.ditheringAlgorithm}
-                    onChange={(e) => updateParam('ditheringAlgorithm', e.target.value as DitheringAlgorithm)}
+                    value={params.colorPalette}
+                    onChange={(e) => updateParam('colorPalette', e.target.value as ColorPalette)}
                     className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-xl focus:outline-none"
                   >
-                    <optgroup label="Error Diffusion">
-                      <option value="floyd-steinberg">Floyd-Steinberg</option>
-                      <option value="atkinson">Atkinson</option>
-                      <option value="jarvis-judice-ninke">Jarvis-Judice-Ninke</option>
-                      <option value="stucki">Stucki</option>
-                      <option value="burkes">Burkes</option>
-                      <option value="sierra">Sierra</option>
-                      <option value="sierra-lite">Sierra-Lite</option>
-                      <option value="two-row-sierra">Two-Row Sierra</option>
-                      <option value="variable-error">Variable Error (Adaptive)</option>
+                    <option value="full-color">Full Color</option>
+                    <optgroup label="Basic">
+                      <option value="black-white">Black & White</option>
+                      <option value="red-black">Red & Black</option>
+                      <option value="blue-white">Blue & White</option>
+                      <option value="green-black">Green & Black</option>
                     </optgroup>
-                    <optgroup label="Ordered Dither">
-                      <option value="bayer-2x2">Bayer 2x2</option>
-                      <option value="bayer-4x4">Bayer 4x4</option>
-                      <option value="bayer-8x8">Bayer 8x8</option>
-                      <option value="ordered">Ordered</option>
-                      <option value="blue-noise">Blue Noise (High Quality)</option>
-                      <option value="clustered-dot">Clustered Dot (Halftone)</option>
+                    <optgroup label="Retro">
+                      <option value="sepia">Sepia</option>
+                      <option value="gameboy">Game Boy</option>
+                      <option value="commodore64">Commodore 64</option>
+                      <option value="amber-crt">Amber CRT</option>
+                      <option value="green-terminal">Green Terminal</option>
                     </optgroup>
-                    <optgroup label="Artistic Patterns">
-                      <option value="crosshatch">Crosshatch</option>
-                      <option value="halftone-dots">Halftone Dots</option>
-                      <option value="newspaper">Newspaper Print</option>
-                      <option value="stipple">Stipple/Pointillism</option>
-                      <option value="grid-pattern">Grid Pattern</option>
-                      <option value="spiral">Spiral</option>
+                    <optgroup label="Neon">
+                      <option value="cyan-magenta">Cyan & Magenta</option>
+                      <option value="neon-pink">Neon Pink</option>
+                      <option value="electric-blue">Electric Blue</option>
+                      <option value="lime-purple">Lime & Purple</option>
+                      <option value="hot-pink-cyan">Hot Pink & Cyan</option>
                     </optgroup>
-                    <optgroup label="Line Patterns">
-                      <option value="horizontal-lines">Horizontal Lines</option>
-                      <option value="vertical-lines">Vertical Lines</option>
-                      <option value="diagonal-lines">Diagonal Lines</option>
+                    <optgroup label="Vintage">
+                      <option value="orange-blue">Orange & Blue</option>
+                      <option value="purple-yellow">Purple & Yellow</option>
+                      <option value="teal-orange">Teal & Orange</option>
+                      <option value="burgundy-cream">Burgundy & Cream</option>
                     </optgroup>
-                    <optgroup label="Noise & Random">
-                      <option value="random">Random</option>
-                      <option value="white-noise">White Noise</option>
-                      <option value="noise-texture">Noise Texture</option>
+                    <optgroup label="Nature">
+                      <option value="forest-green">Forest Green</option>
+                      <option value="ocean-blue">Ocean Blue</option>
+                      <option value="sunset-red">Sunset Red</option>
+                      <option value="lavender-sage">Lavender & Sage</option>
                     </optgroup>
-                    <optgroup label="Special Algorithms">
-                      <option value="riemersma">Riemersma (Space-Filling)</option>
-                    </optgroup>
-                  </select>
-                </div>
-                <div style={{ height: '1rem' }}></div>
-              </>
-            )}
-
-            <div style={{ height: '1rem' }}></div>
-            <div className="h-px bg-white/30" style={{ marginLeft: '20px', marginRight: '20px' }}></div>
-            <div style={{ height: '1rem' }}></div>
-
-            <SliderControl
-              label="Brightness"
-              value={params.brightness}
-              onChange={(v) => updateParam('brightness', v)}
-              min={-255}
-              max={255}
-              step={1}
-            />
-
-            <SliderControl
-              label="Contrast"
-              value={params.contrast}
-              onChange={(v) => updateParam('contrast', v)}
-              min={-255}
-              max={255}
-              step={1}
-            />
-
-            {params.effect === 'threshold' && (
-              <>
-                <div className="h-px bg-[#ff6b35]" style={{ marginLeft: '20px', marginRight: '20px' }}></div>
-                <SliderControl
-                  label="Threshold"
-                  value={params.threshold}
-                  onChange={(v) => updateParam('threshold', v)}
-                  min={0}
-                  max={255}
-                  step={1}
-                />
-              </>
-            )}
-
-            {params.effect === 'dithering' && (
-              <>
-                <div className="h-px bg-[#ff6b35]" style={{ marginLeft: '20px', marginRight: '20px' }}></div>
-
-                <SliderControl
-                  label="Effect scale"
-                  value={params.effectScale}
-                  onChange={(v) => updateParam('effectScale', v)}
-                  min={0.1}
-                  max={5}
-                  step={0.1}
-                />
-
-                <SliderControl
-                  label="Effect size"
-                  value={params.effectSize}
-                  onChange={(v) => updateParam('effectSize', v)}
-                  min={1}
-                  max={64}
-                  step={1}
-                />
-
-                {/* Invert Button */}
-                <div style={{ paddingLeft: '20px', paddingRight: '20px', marginBottom: '0.5rem' }}>
-                  <button
-                    onClick={() => updateParam('invert', !params.invert)}
-                    className={`w-full px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
-                      params.invert
-                        ? 'glass-button-primary text-white'
-                        : 'glass-panel text-white/60 hover:text-white'
-                    }`}
-                  >
-                    {params.invert ? 'Invert: On' : 'Invert: Off'}
-                  </button>
-                </div>
-
-                <SliderControl
-                  label="Dither contrast"
-                  value={params.ditherContrast}
-                  onChange={(v) => updateParam('ditherContrast', v)}
-                  min={50}
-                  max={500}
-                  step={5}
-                />
-
-                <SliderControl
-                  label="Luminance threshold"
-                  value={params.luminanceThreshold}
-                  onChange={(v) => updateParam('luminanceThreshold', v)}
-                  min={0}
-                  max={255}
-                  step={1}
-                />
-
-                <SliderControl
-                  label="Blur"
-                  value={params.blur}
-                  onChange={(v) => updateParam('blur', v)}
-                  min={0}
-                  max={20}
-                  step={0.5}
-                />
-
-                <SliderControl
-                  label="Depth"
-                  value={params.depth}
-                  onChange={(v) => updateParam('depth', v)}
-                  min={2}
-                  max={100}
-                  step={1}
-                />
-              </>
-            )}
+            </select>
           </div>
-        </div>
 
-        {image && (
-          <div className="mt-4" style={{ paddingLeft: '20px', paddingRight: '20px' }}>
-            <div className="glass-panel py-5 px-6 space-y-4 rounded-2xl">
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs">
-                  <span className="text-white/80 font-semibold">Width</span>
-                  <span className="font-mono font-bold text-white">{image.width}px</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-white/80 font-semibold">Height</span>
-                  <span className="font-mono font-bold text-white">{image.height}px</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-white/80 font-semibold">Status</span>
-                  <span className={`font-bold ${isProcessing ? 'text-white' : 'text-white'}`}>
-                    {isProcessing ? 'Processing...' : 'Ready'}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={handleExport}
-                disabled={isProcessing}
-                className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                Export Image
-              </button>
+          {/* Dithering Algorithm */}
+          {params.effect === 'dithering' && (
+            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+              <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                Dithering algorithm
+              </label>
+                      <select
+                        value={params.ditheringAlgorithm}
+                        onChange={(e) => updateParam('ditheringAlgorithm', e.target.value as DitheringAlgorithm)}
+                        className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-xl focus:outline-none"
+                      >
+                        <optgroup label="Error Diffusion">
+                          <option value="floyd-steinberg">Floyd-Steinberg</option>
+                          <option value="atkinson">Atkinson</option>
+                          <option value="jarvis-judice-ninke">Jarvis-Judice-Ninke</option>
+                          <option value="stucki">Stucki</option>
+                          <option value="burkes">Burkes</option>
+                          <option value="sierra">Sierra</option>
+                          <option value="sierra-lite">Sierra-Lite</option>
+                          <option value="two-row-sierra">Two-Row Sierra</option>
+                          <option value="variable-error">Variable Error (Adaptive)</option>
+                        </optgroup>
+                        <optgroup label="Ordered Dither">
+                          <option value="bayer-2x2">Bayer 2x2</option>
+                          <option value="bayer-4x4">Bayer 4x4</option>
+                          <option value="bayer-8x8">Bayer 8x8</option>
+                          <option value="ordered">Ordered</option>
+                          <option value="blue-noise">Blue Noise (High Quality)</option>
+                          <option value="clustered-dot">Clustered Dot (Halftone)</option>
+                        </optgroup>
+                        <optgroup label="Artistic Patterns">
+                          <option value="crosshatch">Crosshatch</option>
+                          <option value="halftone-dots">Halftone Dots</option>
+                          <option value="newspaper">Newspaper Print</option>
+                          <option value="stipple">Stipple/Pointillism</option>
+                          <option value="grid-pattern">Grid Pattern</option>
+                          <option value="spiral">Spiral</option>
+                        </optgroup>
+                        <optgroup label="Line Patterns">
+                          <option value="horizontal-lines">Horizontal Lines</option>
+                          <option value="vertical-lines">Vertical Lines</option>
+                          <option value="diagonal-lines">Diagonal Lines</option>
+                        </optgroup>
+                        <optgroup label="Noise & Random">
+                          <option value="random">Random</option>
+                          <option value="white-noise">White Noise</option>
+                          <option value="noise-texture">Noise Texture</option>
+                        </optgroup>
+                        <optgroup label="Special Algorithms">
+                          <option value="riemersma">Riemersma (Space-Filling)</option>
+                        </optgroup>
+                      </select>
             </div>
-          </div>
-        )}
+          )}
+
+          <SliderControl
+                  label="Brightness"
+                  value={params.brightness}
+                  onChange={(v) => updateParam('brightness', v)}
+                  min={-50}
+                  max={50}
+                  step={1}
+                />
+
+          <SliderControl
+            label="Contrast"
+            value={params.contrast}
+            onChange={(v) => updateParam('contrast', v)}
+            min={-50}
+            max={50}
+            step={1}
+          />
+
+          {/* Threshold Section */}
+          {params.effect === 'threshold' && (
+            <>
+              <SliderControl
+                label="Threshold"
+                value={params.threshold}
+                onChange={(v) => updateParam('threshold', v)}
+                min={0}
+                max={255}
+                step={1}
+              />
+            </>
+          )}
+
+          {/* Dithering Controls Section */}
+          {params.effect === 'dithering' && (
+            <>
+              <SliderControl
+                label="Effect scale"
+                value={params.effectScale}
+                onChange={(v) => updateParam('effectScale', v)}
+                min={0.5}
+                max={2}
+                step={0.1}
+              />
+
+              <SliderControl
+                label="Effect size"
+                value={params.effectSize}
+                onChange={(v) => updateParam('effectSize', v)}
+                min={1}
+                max={16}
+                step={1}
+              />
+
+              <SliderControl
+                label="Dither contrast"
+                value={params.ditherContrast}
+                onChange={(v) => updateParam('ditherContrast', v)}
+                min={80}
+                max={200}
+                step={5}
+              />
+
+              <SliderControl
+                label="Luminance threshold"
+                value={params.luminanceThreshold}
+                onChange={(v) => updateParam('luminanceThreshold', v)}
+                min={64}
+                max={192}
+                step={1}
+              />
+
+              <SliderControl
+                label="Blur"
+                value={params.blur}
+                onChange={(v) => updateParam('blur', v)}
+                min={0}
+                max={5}
+                step={0.1}
+              />
+
+              <SliderControl
+                label="Depth"
+                value={params.depth}
+                onChange={(v) => updateParam('depth', v)}
+                min={10}
+                max={70}
+                step={1}
+              />
+            </>
+          )}
+
+          {/* Export Panel */}
+          {image && (
+            <div style={{ padding: '0 2rem', marginTop: '1rem' }}>
+              <div className="glass-panel py-6 px-7 space-y-4 rounded-2xl">
+                <div className="space-y-6">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-white/80 font-semibold">Width</span>
+                    <span className="font-mono font-bold text-white">{image.width}px</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-white/80 font-semibold">Height</span>
+                    <span className="font-mono font-bold text-white">{image.height}px</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-white/80 font-semibold">Status</span>
+                    <span className={`font-bold ${isProcessing ? 'text-white' : 'text-white'}`}>
+                      {isProcessing ? 'Processing...' : 'Ready'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleExport}
+                  disabled={isProcessing}
+                  className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  Export Image
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </aside>
 
       <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden overscroll-none z-10">
         {!image ? (
           <div
-            className="text-center p-16 transition-all duration-300 rounded-3xl"
+            className="text-center p-28 transition-all duration-300 rounded-3xl"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -919,7 +903,7 @@ export default function ImageProcessor() {
             </label>
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-transparent">
+          <div className="w-full h-full flex flex-col items-center justify-center p-12 bg-transparent">
             <div
               className="flex-1 flex items-center justify-center w-full overflow-hidden cursor-grab active:cursor-grabbing bg-transparent"
               onMouseDown={(e) => {
@@ -938,7 +922,7 @@ export default function ImageProcessor() {
               onMouseLeave={() => setIsDragging(false)}
             >
               <div
-                className="glass-panel rounded-3xl p-6"
+                className="glass-panel rounded-3xl p-8"
                 style={{
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transition: isDragging ? 'none' : 'transform 0.2s ease-out',
