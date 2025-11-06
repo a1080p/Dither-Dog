@@ -281,6 +281,7 @@ export default function ImageProcessor() {
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for desktop
+  const [isMobile, setIsMobile] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -314,6 +315,21 @@ export default function ImageProcessor() {
       sidebarRef.current.scrollTop = scrollPosRef.current;
     }
   });
+
+  // Track mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Check on mount
+    checkMobile();
+
+    // Add resize listener
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (!image || !sourceCanvasRef.current || !canvasRef.current) return;
@@ -991,7 +1007,7 @@ export default function ImageProcessor() {
                   ref={canvasRef}
                   className="rounded-2xl block"
                   style={{
-                    maxWidth: 'calc(100vw - 30rem)',
+                    maxWidth: isMobile ? 'calc(100vw - 4rem)' : 'calc(100vw - 30rem)',
                     maxHeight: 'calc(100vh - 16rem)',
                     width: 'auto',
                     height: 'auto'
