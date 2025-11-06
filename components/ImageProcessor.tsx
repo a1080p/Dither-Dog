@@ -400,12 +400,28 @@ export default function ImageProcessor() {
   const handleExport = () => {
     if (!canvasRef.current) return;
     canvasRef.current.toBlob((blob) => {
-      if (blob) {
+      if (!blob) return;
+
+      // For iOS Safari - open in new tab
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const newWindow = window.open();
+          if (newWindow) {
+            newWindow.document.write(`<img src="${reader.result}" alt="Dithered image" style="max-width:100%;height:auto;" />`);
+          }
+        };
+        reader.readAsDataURL(blob);
+      }
+      // For other browsers - download
+      else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `processed-${Date.now()}.png`;
+        a.download = `dither-dog-${Date.now()}.png`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     });
