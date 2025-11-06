@@ -2,17 +2,18 @@ import Link from 'next/link';
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-dark flex items-center justify-center p-8">
+    <div className="min-h-screen bg-gradient-dark flex items-center justify-center p-8 relative">
+      {/* Question Mark Button - Top Right (fixed to viewport) */}
+      <Link
+        href="/"
+        className="fixed top-6 right-6 z-50 flex items-center justify-center glass-button-primary text-white font-bold rounded-2xl hover:scale-110 transition-transform duration-300"
+        style={{ width: '4rem', height: '4rem' }}
+        title="Back to Image Processor"
+      >
+        <span style={{ fontSize: '2.5rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</span>
+      </Link>
+
       <div className="max-w-3xl w-full glass-panel rounded-3xl p-12 relative">
-        {/* Back Button - Top Right */}
-        <Link
-          href="/"
-          className="absolute top-6 right-6 flex items-center justify-center glass-button-primary text-white font-bold rounded-2xl hover:scale-110 transition-transform duration-300"
-          style={{ width: '4rem', height: '4rem' }}
-          title="Back to Image Processor"
-        >
-          <span style={{ fontSize: '2.5rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</span>
-        </Link>
 
         <h1 className="text-5xl font-black text-white mb-8 tracking-tight">
           About <span className="text-[#ff6b35]">Dither Dog</span>
