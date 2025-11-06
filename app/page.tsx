@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import ImageProcessor from '@/components/ImageProcessor';
 
 export default function Home() {
-  redirect('/image-processor');
+  return <ImageProcessor />;
 }
