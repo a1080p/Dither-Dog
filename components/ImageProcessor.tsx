@@ -575,7 +575,29 @@ export default function ImageProcessor() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-dark overflow-hidden relative">
+    <div className="flex md:flex-row flex-col h-screen bg-gradient-dark overflow-hidden md:overflow-auto relative">
+      {/* Mobile Export Button - Fixed at bottom right - Only visible on mobile when image is loaded */}
+      {image && (
+        <button
+          onClick={handleExport}
+          disabled={isProcessing}
+          className="md:hidden fixed z-[10001] glass-button-primary text-white font-bold rounded-2xl shadow-2xl disabled:opacity-50"
+          style={{
+            bottom: '1rem',
+            right: '1rem',
+            width: '3.5rem',
+            height: '3.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.5rem'
+          }}
+          title="Export Image"
+        >
+          ↓
+        </button>
+      )}
+
       {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -977,9 +999,9 @@ export default function ImageProcessor() {
             </label>
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-12 bg-transparent">
+          <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-12 bg-transparent">
             <div
-              className="flex-1 flex items-center justify-center w-full overflow-hidden cursor-grab active:cursor-grabbing bg-transparent"
+              className="flex-1 flex items-center justify-center w-full overflow-hidden cursor-grab active:cursor-grabbing bg-transparent touch-pan-y"
               onMouseDown={(e) => {
                 setIsDragging(true);
                 setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -996,7 +1018,7 @@ export default function ImageProcessor() {
               onMouseLeave={() => setIsDragging(false)}
             >
               <div
-                className="glass-panel rounded-3xl p-8"
+                className="glass-panel rounded-3xl p-3 md:p-8"
                 style={{
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transition: isDragging ? 'none' : 'transform 0.2s ease-out',
@@ -1017,23 +1039,23 @@ export default function ImageProcessor() {
             </div>
 
             {/* Zoom and Fullscreen Controls */}
-            <div className="flex items-center justify-center gap-5" style={{ marginTop: '0rem', marginBottom: '2rem' }}>
+            <div className="flex items-center justify-center gap-3 md:gap-5" style={{ marginTop: '0rem', marginBottom: isMobile ? '5rem' : '2rem' }}>
               <button
                 onClick={() => setZoom(Math.min(4, zoom + 0.25))}
                 className="flex items-center justify-center glass-button-primary text-white font-bold rounded-2xl"
-                style={{ width: '4rem', height: '4rem' }}
+                style={{ width: isMobile ? '3rem' : '4rem', height: isMobile ? '3rem' : '4rem' }}
                 title="Zoom In"
               >
-                <span style={{ fontSize: '3rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#43;</span>
+                <span style={{ fontSize: isMobile ? '2rem' : '3rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#43;</span>
               </button>
 
               <button
                 onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
                 className="flex items-center justify-center glass-button-primary text-white font-bold rounded-2xl"
-                style={{ width: '4rem', height: '4rem' }}
+                style={{ width: isMobile ? '3rem' : '4rem', height: isMobile ? '3rem' : '4rem' }}
                 title="Zoom Out"
               >
-                <span style={{ fontSize: '3rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#8722;</span>
+                <span style={{ fontSize: isMobile ? '2rem' : '3rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#8722;</span>
               </button>
 
               <button
@@ -1042,10 +1064,10 @@ export default function ImageProcessor() {
                   setPan({ x: 0, y: 0 });
                 }}
                 className="flex items-center justify-center glass-button-primary text-white font-bold rounded-2xl"
-                style={{ width: '4rem', height: '4rem' }}
+                style={{ width: isMobile ? '3rem' : '4rem', height: isMobile ? '3rem' : '4rem' }}
                 title="Reset View"
               >
-                <span style={{ fontSize: '2.5rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⟲</span>
+                <span style={{ fontSize: isMobile ? '2rem' : '2.5rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⟲</span>
               </button>
 
               <button
@@ -1063,10 +1085,10 @@ export default function ImageProcessor() {
                   setIsFullscreen(!isFullscreen);
                 }}
                 className="flex items-center justify-center glass-button-primary text-white font-bold rounded-2xl"
-                style={{ width: '4rem', height: '4rem' }}
+                style={{ width: isMobile ? '3rem' : '4rem', height: isMobile ? '3rem' : '4rem' }}
                 title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               >
-                <span style={{ fontSize: '2.5rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⊞</span>
+                <span style={{ fontSize: isMobile ? '2rem' : '2.5rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⊞</span>
               </button>
             </div>
           </div>
