@@ -399,22 +399,57 @@ export default function ImageProcessor() {
 
   const handleExport = () => {
     if (!canvasRef.current) return;
-    canvasRef.current.toBlob((blob) => {
-      if (!blob) return;
 
-      // For iOS Safari - open in new tab
-      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const newWindow = window.open();
-          if (newWindow) {
-            newWindow.document.write(`<img src="${reader.result}" alt="Dithered image" style="max-width:100%;height:auto;" />`);
+    // Try to use Share API first (works on mobile)
+    if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      canvasRef.current.toBlob(async (blob) => {
+        if (!blob) return;
+
+        try {
+          const file = new File([blob], `dither-dog-${Date.now()}.png`, { type: 'image/png' });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Dither Dog Image',
+              text: 'Processed image from Dither Dog'
+            });
+          } else {
+            // Fallback: convert to data URL and open
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const dataUrl = reader.result as string;
+              const link = document.createElement('a');
+              link.href = dataUrl;
+              link.download = `dither-dog-${Date.now()}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            };
+            reader.readAsDataURL(blob);
           }
-        };
-        reader.readAsDataURL(blob);
-      }
-      // For other browsers - download
-      else {
+        } catch (err) {
+          console.error('Share failed:', err);
+          // Fallback to data URL download
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const dataUrl = reader.result as string;
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `dither-dog-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+          reader.readAsDataURL(blob);
+        }
+      });
+    }
+    // Desktop fallback
+    else {
+      canvasRef.current.toBlob((blob) => {
+        if (!blob) return;
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -423,8 +458,8 @@ export default function ImageProcessor() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      }
-    });
+      });
+    }
   };
 
   const updateParam = <K extends keyof ProcessingParams>(
