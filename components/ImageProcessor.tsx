@@ -280,7 +280,6 @@ export default function ImageProcessor() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for desktop
   const [isMobile, setIsMobile] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -404,9 +403,37 @@ export default function ImageProcessor() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `processed-${Date.now()}.png`;
+        a.download = `dither-dog-${Date.now()}.png`;
         a.click();
         URL.revokeObjectURL(url);
+      }
+    });
+  };
+
+  const handleShare = async () => {
+    if (!canvasRef.current) return;
+
+    canvasRef.current.toBlob(async (blob) => {
+      if (blob) {
+        const file = new File([blob], `dither-dog-${Date.now()}.png`, { type: 'image/png' });
+
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Dither Dog Image',
+              text: 'Check out this dithered image!'
+            });
+          } catch (err) {
+            // User cancelled or share failed, fallback to download
+            if (err instanceof Error && err.name !== 'AbortError') {
+              handleExport();
+            }
+          }
+        } else {
+          // Share API not supported, fallback to download
+          handleExport();
+        }
       }
     });
   };
@@ -575,48 +602,7 @@ export default function ImageProcessor() {
   };
 
   return (
-    <div className="flex md:flex-row flex-col h-screen bg-gradient-dark overflow-hidden md:overflow-auto relative">
-      {/* Mobile Export Button - Fixed at bottom right - Only visible on mobile when image is loaded */}
-      {image && (
-        <button
-          onClick={handleExport}
-          disabled={isProcessing}
-          className="md:hidden fixed z-[10001] glass-button-primary text-white font-bold rounded-2xl shadow-2xl disabled:opacity-50"
-          style={{
-            bottom: '1rem',
-            right: '1rem',
-            width: '3.5rem',
-            height: '3.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.5rem'
-          }}
-          title="Export Image"
-        >
-          ↓
-        </button>
-      )}
-
-      {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
-      <button
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="md:hidden fixed z-[10000] glass-button-primary text-white font-bold rounded-xl"
-        style={{
-          width: '2rem',
-          height: '3rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          left: isSidebarOpen ? '23.5rem' : '-0.5rem',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          transition: 'left 300ms'
-        }}
-        title={isSidebarOpen ? "Close Menu" : "Open Menu"}
-      >
-        <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{isSidebarOpen ? '←' : '→'}</span>
-      </button>
+    <div className="flex md:flex-row flex-col h-screen bg-gradient-dark overflow-hidden relative">
 
       {/* About Project Button - Top Right */}
       <Link
@@ -639,21 +625,10 @@ export default function ImageProcessor() {
         <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>?</span>
       </Link>
 
-      {/* Overlay for mobile when sidebar is open - Only on mobile */}
-      {isSidebarOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 z-[9998]"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar - Always visible on desktop, collapsible on mobile */}
+      {/* Sidebar/Controls - Desktop: sidebar on left, Mobile: bottom panel */}
       <aside
         ref={sidebarRef}
-        className={`w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 transition-transform duration-300
-          md:!translate-x-0 md:relative md:z-5
-          fixed left-0 top-0 h-full z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+        className="w-full md:w-[24rem] md:min-w-[24rem] md:max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 h-1/2 md:h-full"
       >
         <div style={{ padding: '1rem 0' }}>
           <input
@@ -942,20 +917,29 @@ export default function ImageProcessor() {
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={handleExport}
-                  disabled={isProcessing}
-                  className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  Export Image
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExport}
+                    disabled={isProcessing}
+                    className="flex-1 px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    disabled={isProcessing}
+                    className="flex-1 px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    Share
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden overscroll-none z-10 w-full md:w-auto">
+      <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden overscroll-none z-10 w-full md:w-auto h-1/2 md:h-full">
         {!image ? (
           <div
             className="text-center p-28 transition-all duration-300 rounded-3xl"
