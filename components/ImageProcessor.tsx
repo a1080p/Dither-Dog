@@ -576,28 +576,6 @@ export default function ImageProcessor() {
 
   return (
     <div className="flex md:flex-row flex-col h-screen bg-gradient-dark overflow-hidden md:overflow-auto relative">
-      {/* Mobile Export Button - Fixed at bottom right - Only visible on mobile when image is loaded */}
-      {image && (
-        <button
-          onClick={handleExport}
-          disabled={isProcessing}
-          className="md:hidden fixed z-[10001] glass-button-primary text-white font-bold rounded-2xl shadow-2xl disabled:opacity-50"
-          style={{
-            bottom: '1rem',
-            right: '1rem',
-            width: '3.5rem',
-            height: '3.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.5rem'
-          }}
-          title="Export Image"
-        >
-          ↓
-        </button>
-      )}
-
       {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
