@@ -32,8 +32,8 @@ export function SmokeBackground() {
       maxLife: number;
 
       constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * (canvas?.width || 800);
+        this.y = Math.random() * (canvas?.height || 600);
         this.size = Math.random() * 100 + 50;
         this.speedX = (Math.random() - 0.5) * 0.5;
         this.speedY = (Math.random() - 0.5) * 0.5;
@@ -63,15 +63,15 @@ export function SmokeBackground() {
         this.speedY *= 0.99;
 
         // Wrap around screen
-        if (this.x < -this.size) this.x = canvas.width + this.size;
-        if (this.x > canvas.width + this.size) this.x = -this.size;
-        if (this.y < -this.size) this.y = canvas.height + this.size;
-        if (this.y > canvas.height + this.size) this.y = -this.size;
+        if (this.x < -this.size) this.x = (canvas?.width || 800) + this.size;
+        if (this.x > (canvas?.width || 800) + this.size) this.x = -this.size;
+        if (this.y < -this.size) this.y = (canvas?.height || 600) + this.size;
+        if (this.y > (canvas?.height || 600) + this.size) this.y = -this.size;
 
         // Reset if life exceeded
         if (this.life > this.maxLife) {
-          this.x = Math.random() * canvas.width;
-          this.y = Math.random() * canvas.height;
+          this.x = Math.random() * (canvas?.width || 800);
+          this.y = Math.random() * (canvas?.height || 600);
           this.life = 0;
         }
       }

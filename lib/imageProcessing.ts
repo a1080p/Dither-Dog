@@ -293,17 +293,17 @@ function invertColors(imageData: ImageData): ImageData {
 /**
  * Floyd-Steinberg dithering
  */
-export function applyFloydSteinberg(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applyFloydSteinberg(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const cellSize = Math.max(1, Math.floor(size));
+  const cellSize = Math.max(1, Math.floor(_size));
 
   for (let y = 0; y < height; y += cellSize) {
     for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const threshold = 128 / scale;
+      const threshold = 128 / _scale;
       const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
@@ -353,17 +353,17 @@ export function applyFloydSteinberg(imageData: ImageData, intensity: number = 1,
 /**
  * Atkinson dithering
  */
-export function applyAtkinson(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applyAtkinson(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const cellSize = Math.max(1, Math.floor(size));
+  const cellSize = Math.max(1, Math.floor(_size));
 
   for (let y = 0; y < height; y += cellSize) {
     for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const threshold = 128 / scale;
+      const threshold = 128 / _scale;
       const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity / 8;
 
@@ -410,7 +410,7 @@ export function applyAtkinson(imageData: ImageData, intensity: number = 1, scale
 /**
  * Jarvis-Judice-Ninke dithering
  */
-export function applyJarvisJudiceNinke(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applyJarvisJudiceNinke(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -445,7 +445,7 @@ export function applyJarvisJudiceNinke(imageData: ImageData, intensity: number =
 /**
  * Stucki dithering
  */
-export function applyStucki(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applyStucki(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -480,7 +480,7 @@ export function applyStucki(imageData: ImageData, intensity: number = 1, scale: 
 /**
  * Burkes dithering
  */
-export function applyBurkes(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData{
+export function applyBurkes(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData{
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -514,7 +514,7 @@ export function applyBurkes(imageData: ImageData, intensity: number = 1, scale: 
 /**
  * Sierra dithering
  */
-export function applySierra(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applySierra(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -549,7 +549,7 @@ export function applySierra(imageData: ImageData, intensity: number = 1, scale: 
 /**
  * Sierra Lite dithering
  */
-export function applySierraLite(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applySierraLite(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -583,7 +583,7 @@ export function applySierraLite(imageData: ImageData, intensity: number = 1, sca
 /**
  * Two-Row Sierra dithering
  */
-export function applyTwoRowSierra(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applyTwoRowSierra(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -617,11 +617,11 @@ export function applyTwoRowSierra(imageData: ImageData, intensity: number = 1, s
 /**
  * Bayer matrix dithering
  */
-function applyBayerMatrix(imageData: ImageData, matrix: number[][], matrixSize: number, scale: number = 1, size: number = 1): ImageData {
+function applyBayerMatrix(imageData: ImageData, matrix: number[][], matrixSize: number, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const cellSize = Math.max(1, Math.floor(size));
+  const cellSize = Math.max(1, Math.floor(_size));
   const factor = 256 / (matrixSize * matrixSize);
 
   for (let y = 0; y < height; y++) {
@@ -632,7 +632,7 @@ function applyBayerMatrix(imageData: ImageData, matrix: number[][], matrixSize: 
       // Apply cell-based sampling for size control
       const cellX = Math.floor(x / cellSize);
       const cellY = Math.floor(y / cellSize);
-      const threshold = (matrix[cellY % matrixSize][cellX % matrixSize] + 1) * factor * scale;
+      const threshold = (matrix[cellY % matrixSize][cellX % matrixSize] + 1) * factor  * _scale;
 
       const newGray = gray > threshold ? 255 : 0;
       data[idx] = data[idx + 1] = data[idx + 2] = newGray;
@@ -642,16 +642,16 @@ function applyBayerMatrix(imageData: ImageData, matrix: number[][], matrixSize: 
   return new ImageData(data, width, height);
 }
 
-export function applyBayer2x2(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
-  return applyBayerMatrix(imageData, BAYER_2X2, 2, scale, size);
+export function applyBayer2x2(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
+  return applyBayerMatrix(imageData, BAYER_2X2, 2, _scale, _size);
 }
 
-export function applyBayer4x4(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
-  return applyBayerMatrix(imageData, BAYER_4X4, 4, scale, size);
+export function applyBayer4x4(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
+  return applyBayerMatrix(imageData, BAYER_4X4, 4, _scale, _size);
 }
 
-export function applyBayer8x8(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
-  return applyBayerMatrix(imageData, BAYER_8X8, 8, scale, size);
+export function applyBayer8x8(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
+  return applyBayerMatrix(imageData, BAYER_8X8, 8, _scale, _size);
 }
 
 /**
@@ -678,7 +678,7 @@ export function applyRandomDither(imageData: ImageData, intensity: number = 1): 
 /**
  * Crosshatch pattern dithering
  */
-export function applyCrosshatch(imageData: ImageData, scale: number = 1, size: number = 4): ImageData {
+export function applyCrosshatch(imageData: ImageData, _scale: number = 1, _size: number = 4): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -689,17 +689,17 @@ export function applyCrosshatch(imageData: ImageData, scale: number = 1, size: n
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
       // Create crosshatch pattern based on luminance
-      const spacing = Math.max(1, Math.floor(size));
-      const diagonalSpacing = Math.max(1, Math.floor(size * 1.5));
+      const spacing = Math.max(1, Math.floor(_size));
+      const diagonalSpacing = Math.max(1, Math.floor(_size * 1.5));
       const horizontalLine = (y % spacing) === 0;
       const verticalLine = (x % spacing) === 0;
       const diagonalLine1 = ((x + y) % diagonalSpacing) === 0;
       const diagonalLine2 = ((x - y) % diagonalSpacing) === 0;
 
       let newGray = 255;
-      const threshold1 = 192 * scale;
-      const threshold2 = 128 * scale;
-      const threshold3 = 64 * scale;
+      const threshold1 = 192  * _scale;
+      const threshold2 = 128  * _scale;
+      const threshold3 = 64  * _scale;
 
       if (gray < threshold1 && (horizontalLine || verticalLine)) newGray = 0;
       if (gray < threshold2 && (diagonalLine1 || diagonalLine2)) newGray = 0;
@@ -715,11 +715,11 @@ export function applyCrosshatch(imageData: ImageData, scale: number = 1, size: n
 /**
  * Halftone dots (newspaper style)
  */
-export function applyHalftoneDots(imageData: ImageData, scale: number = 1, size: number = 6): ImageData {
+export function applyHalftoneDots(imageData: ImageData, _scale: number = 1, _size: number = 6): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const dotSize = Math.max(2, Math.floor(size));
+  const dotSize = Math.max(2, Math.floor(_size));
 
   for (let y = 0; y < height; y += dotSize) {
     for (let x = 0; x < width; x += dotSize) {
@@ -730,7 +730,7 @@ export function applyHalftoneDots(imageData: ImageData, scale: number = 1, size:
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
       // Calculate dot radius based on luminance
-      const radius = (1 - gray / 255) * (dotSize / 2) * scale;
+      const radius = (1 - gray / 255) * (dotSize / 2)  * _scale;
 
       // Draw dot
       for (let dy = 0; dy < dotSize; dy++) {
@@ -754,11 +754,11 @@ export function applyHalftoneDots(imageData: ImageData, scale: number = 1, size:
 /**
  * Newspaper/magazine print effect
  */
-export function applyNewspaper(imageData: ImageData, scale: number = 1, size: number = 8): ImageData {
+export function applyNewspaper(imageData: ImageData, _scale: number = 1, _size: number = 8): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const cellSize = Math.max(2, Math.floor(size));
+  const cellSize = Math.max(2, Math.floor(_size));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -769,7 +769,7 @@ export function applyNewspaper(imageData: ImageData, scale: number = 1, size: nu
       const cellX = x % cellSize;
       const cellY = y % cellSize;
       const centerDist = Math.sqrt((cellX - cellSize/2) ** 2 + (cellY - cellSize/2) ** 2);
-      const threshold = (gray / 255) * (cellSize * 0.6) * scale;
+      const threshold = (gray / 255) * (cellSize * 0.6)  * _scale;
 
       const newGray = centerDist < threshold ? 0 : 255;
       data[idx] = data[idx + 1] = data[idx + 2] = newGray;
@@ -782,11 +782,11 @@ export function applyNewspaper(imageData: ImageData, scale: number = 1, size: nu
 /**
  * Stipple/pointillism effect
  */
-export function applyStipple(imageData: ImageData, scale: number = 1, size: number = 11): ImageData {
+export function applyStipple(imageData: ImageData, _scale: number = 1, _size: number = 11): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const dotSpacing = Math.max(2, Math.floor(size));
+  const dotSpacing = Math.max(2, Math.floor(_size));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -794,7 +794,7 @@ export function applyStipple(imageData: ImageData, scale: number = 1, size: numb
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
       // Create stipple dots with density based on luminance
-      const dotChance = (1 - gray / 255) * 0.6 * scale;
+      const dotChance = (1 - gray / 255) * 0.6  * _scale;
       const inDot = ((x + y * 7) % dotSpacing) < (dotChance * dotSpacing);
 
       const newGray = inDot ? 0 : 255;
@@ -808,18 +808,18 @@ export function applyStipple(imageData: ImageData, scale: number = 1, size: numb
 /**
  * Horizontal lines pattern
  */
-export function applyHorizontalLines(imageData: ImageData, scale: number = 1, size: number = 5): ImageData {
+export function applyHorizontalLines(imageData: ImageData, _scale: number = 1, _size: number = 5): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const spacing = Math.max(2, Math.floor(size));
+  const spacing = Math.max(2, Math.floor(_size));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
-      const lineThickness = Math.floor((1 - gray / 255) * 4 * scale) + 1;
+      const lineThickness = Math.floor((1 - gray / 255) * 4 * _scale) + 1;
       const isLine = (y % spacing) < lineThickness;
 
       const newGray = isLine ? 0 : 255;
@@ -833,18 +833,18 @@ export function applyHorizontalLines(imageData: ImageData, scale: number = 1, si
 /**
  * Vertical lines pattern
  */
-export function applyVerticalLines(imageData: ImageData, scale: number = 1, size: number = 5): ImageData {
+export function applyVerticalLines(imageData: ImageData, _scale: number = 1, _size: number = 5): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const spacing = Math.max(2, Math.floor(size));
+  const spacing = Math.max(2, Math.floor(_size));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
-      const lineThickness = Math.floor((1 - gray / 255) * 4 * scale) + 1;
+      const lineThickness = Math.floor((1 - gray / 255) * 4 * _scale) + 1;
       const isLine = (x % spacing) < lineThickness;
 
       const newGray = isLine ? 0 : 255;
@@ -858,18 +858,18 @@ export function applyVerticalLines(imageData: ImageData, scale: number = 1, size
 /**
  * Diagonal lines pattern
  */
-export function applyDiagonalLines(imageData: ImageData, scale: number = 1, size: number = 8): ImageData {
+export function applyDiagonalLines(imageData: ImageData, _scale: number = 1, _size: number = 8): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const spacing = Math.max(2, Math.floor(size));
+  const spacing = Math.max(2, Math.floor(_size));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
-      const lineThickness = Math.floor((1 - gray / 255) * 5 * scale) + 1;
+      const lineThickness = Math.floor((1 - gray / 255) * 5 * _scale) + 1;
       const isLine = ((x + y) % spacing) < lineThickness;
 
       const newGray = isLine ? 0 : 255;
@@ -883,11 +883,11 @@ export function applyDiagonalLines(imageData: ImageData, scale: number = 1, size
 /**
  * Grid pattern dithering
  */
-export function applyGridPattern(imageData: ImageData, scale: number = 1, size: number = 8): ImageData {
+export function applyGridPattern(imageData: ImageData, _scale: number = 1, _size: number = 8): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const gridSize = Math.max(2, Math.floor(size));
+  const gridSize = Math.max(2, Math.floor(_size));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -895,7 +895,7 @@ export function applyGridPattern(imageData: ImageData, scale: number = 1, size: 
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
       const isGridLine = (x % gridSize === 0) || (y % gridSize === 0);
-      const fillDensity = (1 - gray / 255) * scale;
+      const fillDensity = (1 - gray / 255)  * _scale;
       const shouldFill = ((x + y) % 4) < (fillDensity * 4);
 
       const newGray = (isGridLine || (shouldFill && !isGridLine)) ? 0 : 255;
@@ -909,11 +909,11 @@ export function applyGridPattern(imageData: ImageData, scale: number = 1, size: 
 /**
  * Spiral pattern dithering
  */
-export function applySpiral(imageData: ImageData, scale: number = 1, size: number = 16): ImageData {
+export function applySpiral(imageData: ImageData, _scale: number = 1, _size: number = 16): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const spiralSize = Math.max(4, Math.floor(size));
+  const spiralSize = Math.max(4, Math.floor(_size));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -925,7 +925,7 @@ export function applySpiral(imageData: ImageData, scale: number = 1, size: numbe
       const centerY = y % spiralSize - spiralSize / 2;
       const angle = Math.atan2(centerY, centerX);
       const radius = Math.sqrt(centerX ** 2 + centerY ** 2);
-      const spiralValue = (angle + radius * 0.5 * scale) % (Math.PI * 2);
+      const spiralValue = (angle + radius * 0.5 * _scale) % (Math.PI * 2);
 
       const threshold = (gray / 255) * Math.PI * 2;
       const newGray = spiralValue < threshold ? 0 : 255;
@@ -940,11 +940,11 @@ export function applySpiral(imageData: ImageData, scale: number = 1, size: numbe
 /**
  * Noise texture dithering
  */
-export function applyNoiseTexture(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
+export function applyNoiseTexture(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const noiseScale = Math.max(0.1, size);
+  const noiseScale = Math.max(0.1, _size);
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -953,7 +953,7 @@ export function applyNoiseTexture(imageData: ImageData, scale: number = 1, size:
 
       // Pseudo-random noise based on position
       const noise = Math.abs(Math.sin(x * 12.9898 * noiseScale + y * 78.233 * noiseScale) * 43758.5453) % 1;
-      const threshold = (gray / 255) * scale;
+      const threshold = (gray / 255)  * _scale;
 
       const newGray = noise < threshold ? 255 : 0;
       data[idx] = data[idx + 1] = data[idx + 2] = newGray;
@@ -967,11 +967,11 @@ export function applyNoiseTexture(imageData: ImageData, scale: number = 1, size:
  * Blue Noise Dithering
  * High-quality ordered dithering with blue noise characteristics
  */
-export function applyBlueNoise(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
+export function applyBlueNoise(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const cellSize = Math.max(1, Math.floor(size));
+  const cellSize = Math.max(1, Math.floor(_size));
   const matrixSize = 8;
   const factor = 256 / (matrixSize * matrixSize);
 
@@ -981,7 +981,7 @@ export function applyBlueNoise(imageData: ImageData, scale: number = 1, size: nu
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
       const cellX = Math.floor(x / cellSize);
       const cellY = Math.floor(y / cellSize);
-      const threshold = (BLUE_NOISE_8X8[cellY % matrixSize][cellX % matrixSize] + 1) * factor * scale;
+      const threshold = (BLUE_NOISE_8X8[cellY % matrixSize][cellX % matrixSize] + 1) * factor  * _scale;
       const newGray = gray > threshold ? 255 : 0;
       data[idx] = data[idx + 1] = data[idx + 2] = newGray;
     }
@@ -994,11 +994,11 @@ export function applyBlueNoise(imageData: ImageData, scale: number = 1, size: nu
  * Clustered Dot Dithering
  * Simulates traditional halftone printing with clustered dots
  */
-export function applyClusteredDot(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
+export function applyClusteredDot(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const cellSize = Math.max(1, Math.floor(size));
+  const cellSize = Math.max(1, Math.floor(_size));
   const matrixSize = 8;
   const factor = 256 / (matrixSize * matrixSize);
 
@@ -1008,7 +1008,7 @@ export function applyClusteredDot(imageData: ImageData, scale: number = 1, size:
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
       const cellX = Math.floor(x / cellSize);
       const cellY = Math.floor(y / cellSize);
-      const threshold = (CLUSTERED_DOT_8X8[cellY % matrixSize][cellX % matrixSize] + 1) * factor * scale;
+      const threshold = (CLUSTERED_DOT_8X8[cellY % matrixSize][cellX % matrixSize] + 1) * factor  * _scale;
       const newGray = gray > threshold ? 255 : 0;
       data[idx] = data[idx + 1] = data[idx + 2] = newGray;
     }
@@ -1021,7 +1021,7 @@ export function applyClusteredDot(imageData: ImageData, scale: number = 1, size:
  * White Noise Dithering
  * Simple random threshold dithering
  */
-export function applyWhiteNoise(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
+export function applyWhiteNoise(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -1030,7 +1030,7 @@ export function applyWhiteNoise(imageData: ImageData, scale: number = 1, size: n
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const threshold = (Math.random() * 255) * scale;
+      const threshold = (Math.random() * 255)  * _scale;
       const newGray = gray > threshold ? 255 : 0;
       data[idx] = data[idx + 1] = data[idx + 2] = newGray;
     }
@@ -1043,7 +1043,7 @@ export function applyWhiteNoise(imageData: ImageData, scale: number = 1, size: n
  * Riemersma Dithering
  * Space-filling curve dithering using Hilbert curve traversal
  */
-export function applyRiemersma(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applyRiemersma(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
@@ -1089,7 +1089,7 @@ export function applyRiemersma(imageData: ImageData, intensity: number = 1, scal
     }
 
     const adjustedGray = gray + weightedError * intensity;
-    const threshold = 128 / scale;
+    const threshold = 128 / _scale;
     const newGray = adjustedGray < threshold ? 0 : 255;
     const error = adjustedGray - newGray;
 
@@ -1109,11 +1109,11 @@ export function applyRiemersma(imageData: ImageData, intensity: number = 1, scal
  * Variable Coefficient Error Diffusion
  * Adaptive error diffusion based on pixel intensity
  */
-export function applyVariableError(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
+export function applyVariableError(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
-  const cellSize = Math.max(1, Math.floor(size));
+  const cellSize = Math.max(1, Math.floor(_size));
 
   for (let y = 0; y < height; y += cellSize) {
     for (let x = 0; x < width; x += cellSize) {
@@ -1139,7 +1139,7 @@ export function applyVariableError(imageData: ImageData, intensity: number = 1, 
       }
 
       const divisor = coeffRight + coeffBelowLeft + coeffBelow + coeffBelowRight;
-      const threshold = 128 / scale;
+      const threshold = 128 / _scale;
       const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
@@ -1481,7 +1481,7 @@ export function processImage(
   return processed;
 }
 
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
