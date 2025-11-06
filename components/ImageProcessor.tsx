@@ -280,6 +280,7 @@ export default function ImageProcessor() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for desktop
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -559,6 +560,26 @@ export default function ImageProcessor() {
 
   return (
     <div className="flex h-screen bg-gradient-dark overflow-hidden relative">
+      {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="md:hidden fixed z-[10000] glass-button-primary text-white font-bold rounded-xl"
+        style={{
+          width: '2rem',
+          height: '3rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          left: isSidebarOpen ? '23.5rem' : '-0.5rem',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          transition: 'left 300ms'
+        }}
+        title={isSidebarOpen ? "Close Menu" : "Open Menu"}
+      >
+        <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{isSidebarOpen ? '←' : '→'}</span>
+      </button>
+
       {/* About Project Button - Top Right */}
       <Link
         href="/about"
@@ -580,7 +601,22 @@ export default function ImageProcessor() {
         <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>?</span>
       </Link>
 
-      <aside ref={sidebarRef} className="w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 relative z-5">
+      {/* Overlay for mobile when sidebar is open - Only on mobile */}
+      {isSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-[9998]"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Always visible on desktop, collapsible on mobile */}
+      <aside
+        ref={sidebarRef}
+        className={`w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 transition-transform duration-300
+          md:!translate-x-0 md:relative md:z-5
+          fixed left-0 top-0 h-full z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
         <div style={{ padding: '1rem 0' }}>
           <input
             ref={fileInputRef}
@@ -881,7 +917,7 @@ export default function ImageProcessor() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden overscroll-none z-10">
+      <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden overscroll-none z-10 w-full md:w-auto">
         {!image ? (
           <div
             className="text-center p-28 transition-all duration-300 rounded-3xl"

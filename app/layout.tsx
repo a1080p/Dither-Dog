@@ -12,6 +12,11 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Dither Dog - Image Dithering Web App",
   description: "A modern image processing application with dithering effects",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
