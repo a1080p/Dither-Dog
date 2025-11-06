@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
+import Link from 'next/link';
 import { processImage, type ProcessingParams, type DitheringAlgorithm, type ColorPalette } from '@/lib/imageProcessing';
 
 type Preset = {
@@ -558,6 +559,27 @@ export default function ImageProcessor() {
 
   return (
     <div className="flex h-screen bg-gradient-dark overflow-hidden relative">
+      {/* About Project Button - Top Right */}
+      <Link
+        href="/about"
+        className="glass-button-primary text-white font-bold rounded-xl hover:scale-110 transition-transform duration-300 no-underline"
+        style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          width: '3rem',
+          height: '3rem',
+          textDecoration: 'none',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        title="About Project"
+      >
+        <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>?</span>
+      </Link>
+
       <aside ref={sidebarRef} className="w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 relative z-5">
         <div style={{ padding: '1rem 0' }}>
           <input
