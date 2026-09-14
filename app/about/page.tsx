@@ -21,7 +21,7 @@ export default function AboutPage() {
         }}
       >
         <CornerMarks />
-        <div className="dd-label mb-4" style={{ color: 'var(--accent)' }}>// Project Info</div>
+        <div className="dd-label mb-4" style={{ color: 'var(--accent)' }}>{'// Project Info'}</div>
         <style jsx>{`
           @media (min-width: 768px) {
             .content-wrapper {
