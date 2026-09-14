@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
-import { Roboto } from 'next/font/google';
 import { Analytics } from "@vercel/analytics/react";
+import { doto, alliance } from "./fonts";
 import "./globals.css";
-
-const roboto = Roboto({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '700', '900'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: "Dither Dog - Image Dithering Web App",
@@ -41,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${roboto.className} antialiased bg-black`}>
+      <body className={`${alliance.className} ${doto.variable} antialiased bg-black`}>
         {children}
         <Analytics />
       </body>

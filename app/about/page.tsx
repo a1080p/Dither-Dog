@@ -1,49 +1,27 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { SiteHeader } from '@/components/SiteHeader';
+import { CornerMarks } from '@/components/CornerMarks';
 
 export default function AboutPage() {
   return (
-    <div
-      className="bg-gradient-dark relative"
-      style={{
-        height: '100vh',
-        overflowY: 'auto',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '4rem 1rem 12rem 1rem'
-      }}
-    >
-      {/* Back Button - Top Right */}
-      <Link
-        href="/"
-        className="glass-button-primary text-white font-bold rounded-xl hover:scale-110 transition-transform duration-300 no-underline"
-        style={{
-          position: 'fixed',
-          top: '1rem',
-          right: '1rem',
-          width: '3rem',
-          height: '3rem',
-          textDecoration: 'none',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-        title="Back to Image Processor"
-      >
-        <span style={{ fontSize: '1.75rem', lineHeight: '1', display: 'block', marginTop: '-0.25rem' }}>←</span>
-      </Link>
-
+    <div className="min-h-screen bg-[var(--background)]">
+      <SiteHeader />
       <div
-        className="w-full glass-panel rounded-3xl relative"
+        className="flex items-start justify-center"
+        style={{ padding: '4rem 1rem 8rem 1rem' }}
+      >
+      <div
+        className="w-full glass-panel relative"
         style={{
           maxWidth: '64rem',
           padding: '1.5rem 1.5rem 6rem 1.5rem'
         }}
       >
+        <CornerMarks />
+        <div className="dd-label mb-4" style={{ color: 'var(--accent)' }}>// Project Info</div>
         <style jsx>{`
           @media (min-width: 768px) {
             .content-wrapper {
@@ -70,10 +48,10 @@ export default function AboutPage() {
 
         <div className="content-wrapper" style={{ padding: '2rem 2.5rem 8rem 2.5rem' }}>
           <h1
-            className="text-5xl font-black text-white tracking-tight"
-            style={{ marginBottom: '1.5rem' }}
+            className="font-doto text-5xl text-white tracking-tight"
+            style={{ marginBottom: '1.5rem', fontWeight: 800 }}
           >
-            About <span className="text-[#ff6b35]">Dither Dog</span>
+            About <span style={{ color: 'var(--accent)' }}>Dither Dog</span>
           </h1>
 
           <div style={{ lineHeight: '1.8' }}>
@@ -156,7 +134,7 @@ export default function AboutPage() {
                 href="https://github.com/a1080p/Dither-Dog"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#ff6b35] hover:text-[#ff8555] font-semibold"
+                className="text-[var(--accent)] hover:opacity-80 font-semibold"
                 style={{ textDecoration: 'underline' }}
               >
                 GitHub
@@ -170,18 +148,14 @@ export default function AboutPage() {
             style={{ marginTop: '2rem', paddingTop: '1.5rem' }}
           >
             <Link
-              href="/"
-              className="inline-block glass-button-primary text-white font-bold rounded-3xl hover:scale-105 transition-transform duration-300"
-              style={{
-                padding: '0.75rem 1.5rem',
-                fontSize: '1.125rem',
-                textDecoration: 'none'
-              }}
+              href="/workspace"
+              className="dd-btn dd-btn-primary no-underline"
             >
               Start Dithering
             </Link>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

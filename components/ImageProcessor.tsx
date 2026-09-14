@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
-import Link from 'next/link';
 import { processImage, type ProcessingParams, type DitheringAlgorithm, type ColorPalette } from '@/lib/imageProcessing';
 
 type Preset = {
@@ -617,7 +616,7 @@ export default function ImageProcessor() {
               onTouchStart={handleSliderMouseDown}
               onFocus={(e) => e.preventDefault()}
               style={{ width: 'calc(100% - 40px)', scrollMargin: '0' }}
-              className="h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-[#ff6b35]"
+              className="h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-[var(--accent)]"
             />
           </div>
         </div>
@@ -626,7 +625,7 @@ export default function ImageProcessor() {
   };
 
   return (
-    <div className="flex md:flex-row flex-col h-screen bg-gradient-dark overflow-hidden md:overflow-auto relative">
+    <div className="flex md:flex-row flex-col h-[calc(100vh-3.5rem)] bg-gradient-dark overflow-hidden md:overflow-auto relative">
       {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -638,7 +637,7 @@ export default function ImageProcessor() {
           alignItems: 'center',
           justifyContent: 'center',
           left: isSidebarOpen ? '23.5rem' : '-0.5rem',
-          top: '50%',
+          top: 'calc(50% + 1.75rem)',
           transform: 'translateY(-50%)',
           transition: 'left 300ms'
         }}
@@ -646,27 +645,6 @@ export default function ImageProcessor() {
       >
         <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{isSidebarOpen ? '←' : '→'}</span>
       </button>
-
-      {/* About Project Button - Top Right */}
-      <Link
-        href="/about"
-        className="glass-button-primary text-white font-bold rounded-xl hover:scale-110 transition-transform duration-300 no-underline"
-        style={{
-          position: 'fixed',
-          top: '1rem',
-          right: '1rem',
-          width: '3rem',
-          height: '3rem',
-          textDecoration: 'none',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-        title="About Project"
-      >
-        <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>?</span>
-      </Link>
 
       {/* Overlay for mobile when sidebar is open - Only on mobile */}
       {isSidebarOpen && (
@@ -681,7 +659,7 @@ export default function ImageProcessor() {
         ref={sidebarRef}
         className={`w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 transition-transform duration-300
           md:!translate-x-0 md:relative md:z-5
-          fixed left-0 top-0 h-full z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          fixed left-0 top-14 h-[calc(100%-3.5rem)] md:top-0 md:h-full z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div style={{ padding: '1rem 0' }}>
