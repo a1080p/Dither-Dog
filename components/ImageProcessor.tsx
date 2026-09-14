@@ -251,8 +251,26 @@ const presets: Preset[] = [
   },
 ];
 
+type MediaType = 'image' | 'video' | null;
+
+const VIDEO_FRAME_DURATION = 1 / 30; // approximate single-frame step at 30fps
+
+function formatTime(seconds: number): string {
+  if (!isFinite(seconds) || seconds < 0) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export default function ImageProcessor() {
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [mediaType, setMediaType] = useState<MediaType>(null);
+  const [mediaDims, setMediaDims] = useState<{ width: number; height: number } | null>(null);
+  const [frameVersion, setFrameVersion] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isRenderingVideo, setIsRenderingVideo] = useState(false);
+  const [renderProgress, setRenderProgress] = useState(0);
   const [params, setParams] = useState<ProcessingParams>({
     brightness: 0,
     contrast: 0,
@@ -284,16 +302,32 @@ export default function ImageProcessor() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceCanvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const scrollPosRef = useRef(0);
+  const videoObjectUrlRef = useRef<string | null>(null);
+
+  const hasMedia = mediaType !== null;
+
+  const resetVideoElement = useCallback(() => {
+    if (videoObjectUrlRef.current) {
+      URL.revokeObjectURL(videoObjectUrlRef.current);
+      videoObjectUrlRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.removeAttribute('src');
+      videoRef.current.load();
+    }
+  }, []);
 
   const handleImageLoad = useCallback((file: File) => {
+    resetVideoElement();
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        setImage(img);
         if (sourceCanvasRef.current) {
           const ctx = sourceCanvasRef.current.getContext('2d');
           if (ctx) {
@@ -302,10 +336,222 @@ export default function ImageProcessor() {
             ctx.drawImage(img, 0, 0);
           }
         }
+        setMediaType('image');
+        setMediaDims({ width: img.width, height: img.height });
+        setFrameVersion((v) => v + 1);
       };
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
+  }, [resetVideoElement]);
+
+  const handleVideoLoad = useCallback((file: File) => {
+    if (videoObjectUrlRef.current) {
+      URL.revokeObjectURL(videoObjectUrlRef.current);
+    }
+    const url = URL.createObjectURL(file);
+    videoObjectUrlRef.current = url;
+    setMediaDims(null);
+    setVideoDuration(0);
+    setVideoCurrentTime(0);
+    setIsVideoPlaying(false);
+    setMediaType('video');
+    if (videoRef.current) {
+      videoRef.current.src = url;
+      videoRef.current.load();
+    }
+  }, []);
+
+  // Draw whatever the video element is currently showing into the source canvas
+  const drawVideoFrameToSource = useCallback(() => {
+    const video = videoRef.current;
+    const source = sourceCanvasRef.current;
+    if (!video || !source || video.videoWidth === 0) return;
+    if (source.width !== video.videoWidth || source.height !== video.videoHeight) {
+      source.width = video.videoWidth;
+      source.height = video.videoHeight;
+    }
+    const ctx = source.getContext('2d');
+    ctx?.drawImage(video, 0, 0);
+  }, []);
+
+  // Run the dithering pipeline on whatever is currently in the source canvas
+  // and write it straight to the output canvas. Synchronous and side-effect
+  // free (besides the canvas paint), so it's safe to call from a tight loop.
+  const renderFrameToOutput = useCallback(() => {
+    const source = sourceCanvasRef.current;
+    const output = canvasRef.current;
+    if (!source || !output || source.width === 0) return;
+    const sourceCtx = source.getContext('2d');
+    const outputCtx = output.getContext('2d');
+    if (!sourceCtx || !outputCtx) return;
+
+    const sourceImageData = sourceCtx.getImageData(0, 0, source.width, source.height);
+    const processed = processImage(sourceImageData, params);
+
+    if (output.width !== source.width || output.height !== source.height) {
+      output.width = source.width;
+      output.height = source.height;
+    }
+    outputCtx.putImageData(processed, 0, 0);
+  }, [params]);
+
+  const handleVideoLoadedMetadata = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    setMediaDims({ width: video.videoWidth, height: video.videoHeight });
+    setVideoDuration(video.duration);
+    setVideoCurrentTime(0);
+  }, []);
+
+  // Fires once decoded data is buffered. Some browsers/codecs report this
+  // before frame 0 is actually paintable via drawImage, so nudge the time
+  // forward a hair to force a real decode + 'seeked' event before drawing.
+  const handleVideoLoadedData = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.min(0.001, (video.duration || 0) / 2);
+  }, []);
+
+  // Fires after a scrub-seek settles on a frame
+  const handleVideoSeeked = useCallback(() => {
+    if (!videoRef.current) return;
+    setVideoCurrentTime(videoRef.current.currentTime);
+    drawVideoFrameToSource();
+    setFrameVersion((v) => v + 1);
+  }, [drawVideoFrameToSource]);
+
+  // Fires continuously during normal playback
+  const handleVideoTimeUpdate = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    setVideoCurrentTime(video.currentTime);
+    if (!video.paused) {
+      drawVideoFrameToSource();
+      setFrameVersion((v) => v + 1);
+    }
+  }, [drawVideoFrameToSource]);
+
+  const toggleVideoPlayback = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
+  }, []);
+
+  const stepVideoFrame = useCallback((direction: 1 | -1) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    const next = Math.min(video.duration || 0, Math.max(0, video.currentTime + direction * VIDEO_FRAME_DURATION));
+    video.currentTime = next;
+  }, []);
+
+  const scrubVideoTo = useCallback((time: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    setVideoCurrentTime(time);
+    video.currentTime = time;
+  }, []);
+
+  const handleRenderVideo = useCallback(async () => {
+    const video = videoRef.current;
+    const output = canvasRef.current;
+    if (!video || !output || mediaType !== 'video') return;
+
+    if (typeof MediaRecorder === 'undefined' || typeof output.captureStream !== 'function') {
+      alert('Rendering video isn\'t supported in this browser. Try Chrome, Edge, or Firefox on desktop.');
+      return;
+    }
+
+    setIsRenderingVideo(true);
+    setRenderProgress(0);
+
+    video.pause();
+    if (video.currentTime !== 0) {
+      await new Promise<void>((resolve) => {
+        const onSeeked = () => {
+          video.removeEventListener('seeked', onSeeked);
+          resolve();
+        };
+        video.addEventListener('seeked', onSeeked);
+        video.currentTime = 0;
+      });
+    }
+    drawVideoFrameToSource();
+    renderFrameToOutput();
+
+    const stream = output.captureStream(30);
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks: Blob[] = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    const safeStop = () => {
+      try {
+        if (recorder.state !== 'inactive') recorder.stop();
+      } catch {
+        // already stopped
+      }
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dither-dog-${Date.now()}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setIsRenderingVideo(false);
+      setRenderProgress(0);
+    };
+
+    let rafId = 0;
+    const step = () => {
+      if (video.paused || video.ended) {
+        safeStop();
+        return;
+      }
+      drawVideoFrameToSource();
+      renderFrameToOutput();
+      setRenderProgress(video.duration ? (video.currentTime / video.duration) * 100 : 0);
+      rafId = requestAnimationFrame(step);
+    };
+
+    video.addEventListener('ended', safeStop, { once: true });
+
+    recorder.start();
+    try {
+      await video.play();
+    } catch {
+      safeStop();
+      setIsRenderingVideo(false);
+      return;
+    }
+    rafId = requestAnimationFrame(step);
+
+    return () => cancelAnimationFrame(rafId);
+  }, [mediaType, drawVideoFrameToSource, renderFrameToOutput]);
+
+  // Revoke the object URL for any loaded video when it's replaced or unmounted
+  useEffect(() => {
+    return () => {
+      if (videoObjectUrlRef.current) {
+        URL.revokeObjectURL(videoObjectUrlRef.current);
+      }
+    };
   }, []);
 
   // Restore scroll position immediately after any render
@@ -331,40 +577,30 @@ export default function ImageProcessor() {
   }, []);
 
   useEffect(() => {
-    if (!image || !sourceCanvasRef.current || !canvasRef.current) return;
+    if (!mediaDims || !sourceCanvasRef.current || !canvasRef.current) return;
 
     const processAsync = async () => {
       setIsProcessing(true);
       await new Promise(resolve => setTimeout(resolve, 0));
-
-      const sourceCtx = sourceCanvasRef.current?.getContext('2d');
-      const ctx = canvasRef.current?.getContext('2d');
-
-      if (!sourceCtx || !ctx) return;
-
-      const sourceImageData = sourceCtx.getImageData(
-        0,
-        0,
-        sourceCanvasRef.current!.width,
-        sourceCanvasRef.current!.height
-      );
-
-      const processed = processImage(sourceImageData, params);
-
-      canvasRef.current!.width = image.width;
-      canvasRef.current!.height = image.height;
-      ctx.putImageData(processed, 0, 0);
-
+      renderFrameToOutput();
       setIsProcessing(false);
     };
 
     processAsync();
-  }, [image, params]);
+  }, [mediaDims, frameVersion, params, renderFrameToOutput]);
+
+  const loadFile = useCallback((file: File) => {
+    if (file.type.startsWith('video/')) {
+      handleVideoLoad(file);
+    } else if (file.type.startsWith('image/')) {
+      handleImageLoad(file);
+    }
+  }, [handleVideoLoad, handleImageLoad]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleImageLoad(file);
+      loadFile(file);
     }
   };
 
@@ -391,8 +627,8 @@ export default function ImageProcessor() {
     setIsDragOver(false);
 
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      handleImageLoad(file);
+    if (file) {
+      loadFile(file);
     }
   };
 
@@ -666,19 +902,19 @@ export default function ImageProcessor() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             onChange={handleFileChange}
             className="hidden"
             id="file-input"
           />
 
-          {/* Load Image Button */}
+          {/* Load Media Button */}
           <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
             <label
               htmlFor="file-input"
               className="block w-full px-4 py-5 glass-button-primary text-white text-lg font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
             >
-              {image ? 'Change Image' : 'Load Image'}
+              {hasMedia ? 'Change Media' : 'Load Image or Video'}
             </label>
           </div>
 
@@ -930,32 +1166,55 @@ export default function ImageProcessor() {
           )}
 
           {/* Export Panel */}
-          {image && (
+          {hasMedia && (
             <div style={{ padding: '0 2rem', marginTop: '1rem' }}>
               <div className="glass-panel py-6 px-7 space-y-4 rounded-2xl">
                 <div className="space-y-6">
                   <div className="flex justify-between text-xs">
                     <span className="text-white/80 font-semibold">Width</span>
-                    <span className="font-mono font-bold text-white">{image.width}px</span>
+                    <span className="font-mono font-bold text-white">{mediaDims?.width ?? 0}px</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-white/80 font-semibold">Height</span>
-                    <span className="font-mono font-bold text-white">{image.height}px</span>
+                    <span className="font-mono font-bold text-white">{mediaDims?.height ?? 0}px</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-white/80 font-semibold">Status</span>
-                    <span className={`font-bold ${isProcessing ? 'text-white' : 'text-white'}`}>
-                      {isProcessing ? 'Processing...' : 'Ready'}
+                    <span className="font-bold text-white">
+                      {isRenderingVideo
+                        ? `Rendering... ${Math.round(renderProgress)}%`
+                        : isProcessing
+                          ? 'Processing...'
+                          : 'Ready'}
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={handleExport}
-                  disabled={isProcessing}
-                  className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  Export Image
-                </button>
+                {mediaType === 'video' ? (
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleExport}
+                      disabled={isProcessing || isRenderingVideo}
+                      className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      Save Frame
+                    </button>
+                    <button
+                      onClick={handleRenderVideo}
+                      disabled={isProcessing || isRenderingVideo}
+                      className="w-full px-6 py-3 glass-button text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isRenderingVideo ? `Rendering ${Math.round(renderProgress)}%` : 'Render Video'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleExport}
+                    disabled={isProcessing}
+                    className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    Export Image
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -963,7 +1222,7 @@ export default function ImageProcessor() {
       </aside>
 
       <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden overscroll-none z-10 w-full md:w-auto">
-        {!image ? (
+        {!hasMedia ? (
           <div
             className="text-center p-28 transition-all duration-300 rounded-3xl"
             onDragEnter={handleDragEnter}
@@ -995,14 +1254,14 @@ export default function ImageProcessor() {
               />
             </svg>
             <p className="text-white/60 text-xl font-bold mb-12 tracking-wide">
-              {isDragOver ? 'Drop Image Here' : 'Load An Image To Start Or Drag & Drop'}
+              {isDragOver ? 'Drop It Here' : 'Load An Image Or Video To Start Or Drag & Drop'}
             </p>
             <label
               htmlFor="file-input"
               className="inline-block glass-button-primary text-white text-2xl font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.05] transition-all duration-300"
               style={{ letterSpacing: '0rem', paddingLeft: '3rem', paddingRight: '3rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
             >
-              Choose Image
+              Choose File
             </label>
           </div>
         ) : (
@@ -1037,13 +1296,71 @@ export default function ImageProcessor() {
                   className="rounded-2xl block"
                   style={{
                     maxWidth: isMobile ? 'calc(100vw - 4rem)' : 'calc(100vw - 30rem)',
-                    maxHeight: 'calc(100vh - 16rem)',
+                    maxHeight: mediaType === 'video' ? 'calc(100vh - 21rem)' : 'calc(100vh - 16rem)',
                     width: 'auto',
                     height: 'auto'
                   }}
                 />
               </div>
             </div>
+
+            {/* Video Timeline — scrub, step, and play/pause frame-by-frame */}
+            {mediaType === 'video' && (
+              <div
+                className="glass-panel w-full rounded-2xl"
+                style={{ maxWidth: '40rem', padding: '0.75rem 1.25rem', marginBottom: '0.75rem' }}
+              >
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => stepVideoFrame(-1)}
+                    disabled={isRenderingVideo}
+                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded-lg disabled:opacity-50"
+                    style={{ width: '2.25rem', height: '2.25rem', flexShrink: 0 }}
+                    title="Previous Frame"
+                  >
+                    <span style={{ fontSize: '0.9rem' }}>⏮</span>
+                  </button>
+
+                  <button
+                    onClick={toggleVideoPlayback}
+                    disabled={isRenderingVideo}
+                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded-lg disabled:opacity-50"
+                    style={{ width: '2.5rem', height: '2.5rem', flexShrink: 0 }}
+                    title={isVideoPlaying ? 'Pause' : 'Play'}
+                  >
+                    <span style={{ fontSize: '1rem' }}>{isVideoPlaying ? '⏸' : '▶'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => stepVideoFrame(1)}
+                    disabled={isRenderingVideo}
+                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded-lg disabled:opacity-50"
+                    style={{ width: '2.25rem', height: '2.25rem', flexShrink: 0 }}
+                    title="Next Frame"
+                  >
+                    <span style={{ fontSize: '0.9rem' }}>⏭</span>
+                  </button>
+
+                  <input
+                    type="range"
+                    min={0}
+                    max={videoDuration || 0}
+                    step={VIDEO_FRAME_DURATION}
+                    value={videoCurrentTime}
+                    disabled={isRenderingVideo}
+                    onChange={(e) => scrubVideoTo(Number(e.target.value))}
+                    className="flex-1 h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-[var(--accent)] disabled:opacity-50"
+                  />
+
+                  <span
+                    className="font-mono text-xs font-bold text-white/70"
+                    style={{ minWidth: '5.5rem', textAlign: 'right', flexShrink: 0 }}
+                  >
+                    {formatTime(videoCurrentTime)} / {formatTime(videoDuration)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Zoom and Fullscreen Controls */}
             <div className="flex items-center justify-center gap-3 md:gap-5" style={{ marginTop: '0rem', marginBottom: isMobile ? '5rem' : '2rem' }}>
@@ -1101,6 +1418,19 @@ export default function ImageProcessor() {
           </div>
         )}
         <canvas ref={sourceCanvasRef} className="hidden" />
+        <video
+          ref={videoRef}
+          className="hidden"
+          muted
+          playsInline
+          onLoadedMetadata={handleVideoLoadedMetadata}
+          onLoadedData={handleVideoLoadedData}
+          onSeeked={handleVideoSeeked}
+          onTimeUpdate={handleVideoTimeUpdate}
+          onPlay={() => setIsVideoPlaying(true)}
+          onPause={() => setIsVideoPlaying(false)}
+          onEnded={() => setIsVideoPlaying(false)}
+        />
       </main>
     </div>
   );

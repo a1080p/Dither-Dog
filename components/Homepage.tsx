@@ -46,9 +46,9 @@ export default function Homepage() {
             <div className="dd-label mb-5">Client-Side Image Processor</div>
             <h1
               className="font-doto text-white"
-              style={{ fontWeight: 700, fontSize: "clamp(2.75rem, 6.5vw, 4.75rem)", lineHeight: 1, letterSpacing: "-0.01em" }}
+              style={{ fontWeight: 700, fontSize: "clamp(2.25rem, 5vw, 3.75rem)", lineHeight: 1.05, letterSpacing: "-0.01em" }}
             >
-              See in dots.
+              Dither your<br />whole world.
             </h1>
             <p className="mt-6 max-w-md text-base leading-relaxed text-white/55 md:text-lg">
               Turn any photo into pixel-precise art. Dozens of dithering
