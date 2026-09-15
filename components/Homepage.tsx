@@ -187,26 +187,6 @@ export default function Homepage() {
         </div>
       </section>
 
-      {/* Preset showcase */}
-      <section className="border-t border-white/10 py-20 md:py-24">
-        <div className="mx-auto max-w-6xl px-6 md:px-8">
-          <div className="dd-label mb-3">{'// Neon Dreams Preset'}</div>
-          <h2 className="mb-8 font-subheader text-white" style={{ fontWeight: 700, fontSize: "clamp(1.5rem, 3.5vw, 2rem)" }}>
-            One preset, wildly different results.
-          </h2>
-          <div className="relative mx-auto max-w-lg overflow-hidden rounded-none">
-            <video
-              src="/videos/neon-dreams-showcase.webm"
-              className="h-auto w-full"
-              autoPlay
-              loop
-              muted
-              playsInline
-            />
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="border-t border-white/10 py-20 text-center md:py-28">
         <h2
