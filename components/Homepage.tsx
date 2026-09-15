@@ -78,7 +78,7 @@ export default function Homepage() {
           </div>
 
           <div className="relative mx-auto w-full max-w-sm md:max-w-none">
-            <div className="overflow-hidden rounded-2xl">
+            <div className="overflow-hidden rounded-none">
               <div className="relative aspect-square w-full">
                 <video
                   src="/videos/dither-dog-hero.webm"
@@ -120,7 +120,7 @@ export default function Homepage() {
           gap="1.5rem"
           maxWidth="100%"
           padding="0"
-          borderRadius="1rem"
+          borderRadius="0"
           glowRadius={22}
         >
           {features.map((f) => (
@@ -156,7 +156,7 @@ export default function Homepage() {
             contrast curve — hand-tuned so you can go from source file to
             finished look in one click, then tweak from there.
           </p>
-          <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-px overflow-hidden rounded-none border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
             {presets.map((p) => (
               <Link
                 key={p.name}
@@ -194,7 +194,7 @@ export default function Homepage() {
           <h2 className="mb-8 font-subheader text-white" style={{ fontWeight: 700, fontSize: "clamp(1.5rem, 3.5vw, 2rem)" }}>
             One preset, wildly different results.
           </h2>
-          <div className="relative mx-auto max-w-lg overflow-hidden rounded-2xl">
+          <div className="relative mx-auto max-w-lg overflow-hidden rounded-none">
             <video
               src="/videos/neon-dreams-showcase.webm"
               className="h-auto w-full"

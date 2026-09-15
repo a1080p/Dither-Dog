@@ -1218,7 +1218,7 @@ export default function ImageProcessor() {
               onClick={handleInputClick}
               onFocus={handleInputFocus}
               style={{ width: `${inputWidth}rem` }}
-              className="min-w-[3rem] text-xs font-mono font-bold text-white glass-input px-2 py-1 rounded-lg text-right cursor-text"
+              className="min-w-[3rem] text-xs font-mono font-bold text-white glass-input px-2 py-1 rounded-none text-right cursor-text"
             />
           </div>
           <div className="flex justify-center">
@@ -1246,7 +1246,7 @@ export default function ImageProcessor() {
       {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="md:hidden fixed z-[10000] glass-button-primary text-white font-bold rounded"
+        className="md:hidden fixed z-[10000] glass-button-primary text-white font-bold rounded-none"
         style={{
           width: '2rem',
           height: '3rem',
@@ -1293,7 +1293,7 @@ export default function ImageProcessor() {
           <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
             <label
               htmlFor="file-input"
-              className="block w-full px-4 py-5 glass-button-primary text-white text-base font-bold rounded cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
+              className="block w-full px-4 py-5 glass-button-primary text-white text-base font-bold rounded-none cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
             >
               {hasMedia ? 'Change Media' : 'Load Image, GIF, or Video'}
             </label>
@@ -1311,7 +1311,7 @@ export default function ImageProcessor() {
                   applyPreset(e.target.value);
                 }
               }}
-              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded focus:outline-none"
+              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
             >
               <option value="">Select A Preset...</option>
               {selectedPreset === 'Custom' && <option value="Custom">Custom</option>}
@@ -1331,7 +1331,7 @@ export default function ImageProcessor() {
             <select
               value={params.effect}
               onChange={(e) => updateParam('effect', e.target.value as ProcessingParams['effect'])}
-              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded focus:outline-none"
+              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
             >
               <option value="none">None</option>
               <option value="dithering">Dithering</option>
@@ -1344,7 +1344,7 @@ export default function ImageProcessor() {
           <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
             <button
               onClick={() => updateParam('invert', !params.invert)}
-              className={`w-full px-4 py-3 text-sm font-bold rounded transition-all duration-300 cursor-pointer active:scale-[0.97] ${
+              className={`w-full px-4 py-3 text-sm font-bold rounded-none transition-all duration-300 cursor-pointer active:scale-[0.97] ${
                 params.invert
                   ? 'glass-button-primary text-white'
                   : 'glass-panel text-white/60 border border-white/10 hover:text-white hover:border-white/25 hover:bg-white/[0.04]'
@@ -1362,7 +1362,7 @@ export default function ImageProcessor() {
                   <select
                     value={params.colorPalette}
                     onChange={(e) => updateParam('colorPalette', e.target.value as ColorPalette)}
-                    className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded focus:outline-none"
+                    className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
                   >
                     <option value="full-color">Full Color</option>
                     <optgroup label="Basic">
@@ -1409,7 +1409,7 @@ export default function ImageProcessor() {
                       <select
                         value={params.ditheringAlgorithm}
                         onChange={(e) => updateParam('ditheringAlgorithm', e.target.value as DitheringAlgorithm)}
-                        className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded focus:outline-none"
+                        className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
                       >
                         <optgroup label="Error Diffusion">
                           <option value="floyd-steinberg">Floyd-Steinberg</option>
@@ -1549,7 +1549,7 @@ export default function ImageProcessor() {
           {/* Export Panel */}
           {hasMedia && (
             <div style={{ padding: '0 2rem', marginTop: '1rem' }}>
-              <div className="glass-panel py-6 px-7 space-y-4 rounded">
+              <div className="glass-panel py-6 px-7 space-y-4 rounded-none">
                 <div className="space-y-6">
                   <div className="flex justify-between text-xs">
                     <span className="text-white/80 font-semibold">Width</span>
@@ -1577,7 +1577,7 @@ export default function ImageProcessor() {
                   <select
                     value={imageExportFormat}
                     onChange={(e) => setImageExportFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
-                    className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded focus:outline-none"
+                    className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded-none focus:outline-none"
                   >
                     <option value="png">PNG (.png)</option>
                     <option value="jpeg">JPEG (.jpg)</option>
@@ -1591,7 +1591,7 @@ export default function ImageProcessor() {
                     <select
                       value={videoExportFormat}
                       onChange={(e) => setVideoExportFormat(e.target.value as 'webm' | 'mp4')}
-                      className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded focus:outline-none"
+                      className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded-none focus:outline-none"
                     >
                       {availableVideoFormats.map((format) => (
                         <option key={format} value={format}>
@@ -1607,14 +1607,14 @@ export default function ImageProcessor() {
                     <button
                       onClick={handleExport}
                       disabled={isProcessing || isRenderingVideo}
-                      className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       Save Frame
                     </button>
                     <button
                       onClick={mediaType === 'video' ? handleRenderVideo : handleRenderGifVideo}
                       disabled={isProcessing || isRenderingVideo}
-                      className="w-full px-6 py-3 glass-button text-white text-sm font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full px-6 py-3 glass-button text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       {isRenderingVideo ? `Rendering ${Math.round(renderProgress)}%` : 'Render Video'}
                     </button>
@@ -1623,7 +1623,7 @@ export default function ImageProcessor() {
                   <button
                     onClick={handleExport}
                     disabled={isProcessing}
-                    className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     Export Image
                   </button>
@@ -1637,7 +1637,7 @@ export default function ImageProcessor() {
       <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden overscroll-none z-10 w-full md:w-auto">
         {!hasMedia ? (
           <div
-            className="text-center p-28 transition-all duration-300 rounded"
+            className="text-center p-28 transition-all duration-300 rounded-none"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -1653,7 +1653,7 @@ export default function ImageProcessor() {
               alt="Dither Dog logo"
               width={64}
               height={64}
-              className="mx-auto mb-8 rounded"
+              className="mx-auto mb-8 rounded-none"
               style={{
                 opacity: isDragOver ? 0.7 : 1,
                 transform: isDragOver ? 'scale(1.1)' : 'scale(1)',
@@ -1665,7 +1665,7 @@ export default function ImageProcessor() {
             </p>
             <label
               htmlFor="file-input"
-              className="inline-block glass-button-primary text-white text-lg font-bold rounded cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.05] transition-all duration-300"
+              className="inline-block glass-button-primary text-white text-lg font-bold rounded-none cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.05] transition-all duration-300"
               style={{ letterSpacing: '0rem', paddingLeft: '3rem', paddingRight: '3rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
             >
               Choose File
@@ -1691,7 +1691,7 @@ export default function ImageProcessor() {
               onMouseLeave={() => setIsDragging(false)}
             >
               <div
-                className="glass-panel rounded p-3 md:p-8"
+                className="glass-panel rounded-none p-3 md:p-8"
                 style={{
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
                   transition: isDragging ? 'none' : 'transform 0.2s ease-out',
@@ -1700,7 +1700,7 @@ export default function ImageProcessor() {
               >
                 <canvas
                   ref={canvasRef}
-                  className="rounded-md block"
+                  className="rounded-none block"
                   style={{
                     maxWidth: isMobile ? 'calc(100vw - 4rem)' : 'calc(100vw - 30rem)',
                     maxHeight: mediaType === 'video' || mediaType === 'gif' ? 'calc(100vh - 21rem)' : 'calc(100vh - 16rem)',
@@ -1714,14 +1714,14 @@ export default function ImageProcessor() {
             {/* Timeline — scrub, step, and play/pause frame-by-frame (video or gif) */}
             {(mediaType === 'video' || mediaType === 'gif') && (
               <div
-                className="glass-panel w-full rounded"
+                className="glass-panel w-full rounded-none"
                 style={{ maxWidth: '40rem', padding: '0.75rem 1.25rem', marginBottom: '0.75rem' }}
               >
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => (mediaType === 'video' ? stepVideoFrame(-1) : stepGifFrame(-1))}
                     disabled={isRenderingVideo}
-                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded disabled:opacity-50"
+                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded-none disabled:opacity-50"
                     style={{ width: '2.25rem', height: '2.25rem', flexShrink: 0 }}
                     title="Previous Frame"
                   >
@@ -1731,7 +1731,7 @@ export default function ImageProcessor() {
                   <button
                     onClick={mediaType === 'video' ? toggleVideoPlayback : toggleGifPlayback}
                     disabled={isRenderingVideo}
-                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded disabled:opacity-50"
+                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded-none disabled:opacity-50"
                     style={{ width: '2.5rem', height: '2.5rem', flexShrink: 0 }}
                     title={(mediaType === 'video' ? isVideoPlaying : isGifPlaying) ? 'Pause' : 'Play'}
                   >
@@ -1741,7 +1741,7 @@ export default function ImageProcessor() {
                   <button
                     onClick={() => (mediaType === 'video' ? stepVideoFrame(1) : stepGifFrame(1))}
                     disabled={isRenderingVideo}
-                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded disabled:opacity-50"
+                    className="flex items-center justify-center glass-button-primary text-white font-bold rounded-none disabled:opacity-50"
                     style={{ width: '2.25rem', height: '2.25rem', flexShrink: 0 }}
                     title="Next Frame"
                   >
@@ -1788,7 +1788,7 @@ export default function ImageProcessor() {
             <div className="flex items-center justify-center gap-2 md:gap-3" style={{ marginTop: '0rem', marginBottom: isMobile ? '5rem' : '2rem' }}>
               <button
                 onClick={() => setZoom(Math.min(4, zoom + 0.25))}
-                className="flex items-center justify-center glass-button-primary rounded font-bold text-white"
+                className="flex items-center justify-center glass-button-primary rounded-none font-bold text-white"
                 style={{ width: isMobile ? '2.25rem' : '2.75rem', height: isMobile ? '2.25rem' : '2.75rem' }}
                 title="Zoom In"
               >
@@ -1797,7 +1797,7 @@ export default function ImageProcessor() {
 
               <button
                 onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-                className="flex items-center justify-center glass-button-primary rounded font-bold text-white"
+                className="flex items-center justify-center glass-button-primary rounded-none font-bold text-white"
                 style={{ width: isMobile ? '2.25rem' : '2.75rem', height: isMobile ? '2.25rem' : '2.75rem' }}
                 title="Zoom Out"
               >
@@ -1809,7 +1809,7 @@ export default function ImageProcessor() {
                   setZoom(1);
                   setPan({ x: 0, y: 0 });
                 }}
-                className="flex items-center justify-center glass-button-primary rounded font-bold text-white"
+                className="flex items-center justify-center glass-button-primary rounded-none font-bold text-white"
                 style={{ width: isMobile ? '2.25rem' : '2.75rem', height: isMobile ? '2.25rem' : '2.75rem' }}
                 title="Reset View"
               >
@@ -1830,7 +1830,7 @@ export default function ImageProcessor() {
                   }
                   setIsFullscreen(!isFullscreen);
                 }}
-                className="flex items-center justify-center glass-button-primary rounded font-bold text-white"
+                className="flex items-center justify-center glass-button-primary rounded-none font-bold text-white"
                 style={{ width: isMobile ? '2.25rem' : '2.75rem', height: isMobile ? '2.25rem' : '2.75rem' }}
                 title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               >

@@ -22,7 +22,7 @@ export function SiteHeader() {
             alt="Dither Dog logo"
             width={32}
             height={32}
-            className="h-8 w-8 rounded-[3px]"
+            className="h-8 w-8 rounded-none"
           />
           <span
             className="font-doto tracking-wide text-white text-base md:text-lg"
@@ -34,14 +34,14 @@ export function SiteHeader() {
 
         {/* Absolutely centered so it stays in the exact same spot on every
             page, regardless of whether the right-hand CTA is rendered. */}
-        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-[3px] border border-white/12 px-1 py-1 md:flex">
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-none border border-white/12 px-1 py-1 md:flex">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`dd-label flex items-center gap-2 rounded-[2px] px-3 py-2 no-underline transition-colors ${
+                className={`dd-label flex items-center gap-2 rounded-none px-3 py-2 no-underline transition-colors ${
                   active ? "text-white" : "hover:text-white/80"
                 }`}
               >
