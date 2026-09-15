@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
+import { parseGIF, decompressFrames } from 'gifuct-js';
 import { processImage, type ProcessingParams, type DitheringAlgorithm, type ColorPalette } from '@/lib/imageProcessing';
 
 type Preset = {
@@ -251,7 +252,7 @@ const presets: Preset[] = [
   },
 ];
 
-type MediaType = 'image' | 'video' | null;
+type MediaType = 'image' | 'video' | 'gif' | null;
 
 const VIDEO_FRAME_DURATION = 1 / 30; // approximate single-frame step at 30fps
 
@@ -260,6 +261,62 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// Decodes a GIF into fully-composited frames (handling each frame's disposal
+// method) so they can be randomly accessed like video frames. The browser
+// has no API for this — an <img>/<canvas> only ever shows the gif "playing",
+// never a specific frame on demand.
+function decodeGifFrames(arrayBuffer: ArrayBuffer): { frames: ImageData[]; delays: number[]; width: number; height: number } {
+  const gif = parseGIF(arrayBuffer);
+  const rawFrames = decompressFrames(gif, true);
+  const width = gif.lsd.width;
+  const height = gif.lsd.height;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+
+  const patchCanvas = document.createElement('canvas');
+  const patchCtx = patchCanvas.getContext('2d')!;
+
+  const frames: ImageData[] = [];
+  const delays: number[] = [];
+  let savedSnapshot: ImageData | null = null;
+  let previousDisposal = 0;
+  let previousDims: { top: number; left: number; width: number; height: number } | null = null;
+
+  for (const frame of rawFrames) {
+    // Apply the PREVIOUS frame's disposal before drawing this one
+    if (previousDims) {
+      if (previousDisposal === 2) {
+        ctx.clearRect(previousDims.left, previousDims.top, previousDims.width, previousDims.height);
+      } else if (previousDisposal === 3 && savedSnapshot) {
+        ctx.putImageData(savedSnapshot, 0, 0);
+      }
+    }
+
+    // If this frame will need a disposal-3 restore later, snapshot before drawing it
+    if (frame.disposalType === 3) {
+      savedSnapshot = ctx.getImageData(0, 0, width, height);
+    }
+
+    // Draw via a temp canvas so transparent pixels alpha-composite correctly
+    // instead of punching a hole through putImageData's raw overwrite
+    patchCanvas.width = frame.dims.width;
+    patchCanvas.height = frame.dims.height;
+    patchCtx.putImageData(new ImageData(Uint8ClampedArray.from(frame.patch), frame.dims.width, frame.dims.height), 0, 0);
+    ctx.drawImage(patchCanvas, frame.dims.left, frame.dims.top);
+
+    frames.push(ctx.getImageData(0, 0, width, height));
+    delays.push(frame.delay > 0 ? frame.delay : 100); // GIF spec: 0 delay is conventionally treated as ~100ms
+
+    previousDisposal = frame.disposalType;
+    previousDims = frame.dims;
+  }
+
+  return { frames, delays, width, height };
 }
 
 export default function ImageProcessor() {
@@ -271,6 +328,9 @@ export default function ImageProcessor() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isRenderingVideo, setIsRenderingVideo] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
+  const [gifFrameIndex, setGifFrameIndex] = useState(0);
+  const [gifFrameCount, setGifFrameCount] = useState(0);
+  const [isGifPlaying, setIsGifPlaying] = useState(false);
   const [params, setParams] = useState<ProcessingParams>({
     brightness: 0,
     contrast: 0,
@@ -307,6 +367,10 @@ export default function ImageProcessor() {
   const sidebarRef = useRef<HTMLElement>(null);
   const scrollPosRef = useRef(0);
   const videoObjectUrlRef = useRef<string | null>(null);
+  const gifFramesRef = useRef<ImageData[]>([]);
+  const gifDelaysRef = useRef<number[]>([]);
+  const gifIndexRef = useRef(0);
+  const gifPlaybackTimeoutRef = useRef<number | null>(null);
 
   const hasMedia = mediaType !== null;
 
@@ -322,8 +386,22 @@ export default function ImageProcessor() {
     }
   }, []);
 
+  const resetGifPlayback = useCallback(() => {
+    if (gifPlaybackTimeoutRef.current !== null) {
+      clearTimeout(gifPlaybackTimeoutRef.current);
+      gifPlaybackTimeoutRef.current = null;
+    }
+    gifFramesRef.current = [];
+    gifDelaysRef.current = [];
+    gifIndexRef.current = 0;
+    setIsGifPlaying(false);
+    setGifFrameIndex(0);
+    setGifFrameCount(0);
+  }, []);
+
   const handleImageLoad = useCallback((file: File) => {
     resetVideoElement();
+    resetGifPlayback();
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -343,9 +421,10 @@ export default function ImageProcessor() {
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
-  }, [resetVideoElement]);
+  }, [resetVideoElement, resetGifPlayback]);
 
   const handleVideoLoad = useCallback((file: File) => {
+    resetGifPlayback();
     if (videoObjectUrlRef.current) {
       URL.revokeObjectURL(videoObjectUrlRef.current);
     }
@@ -360,7 +439,88 @@ export default function ImageProcessor() {
       videoRef.current.src = url;
       videoRef.current.load();
     }
+  }, [resetGifPlayback]);
+
+  // Draw one decoded GIF frame into the source canvas
+  const drawGifFrameToSource = useCallback((index: number) => {
+    const source = sourceCanvasRef.current;
+    const frame = gifFramesRef.current[index];
+    if (!source || !frame) return;
+    if (source.width !== frame.width || source.height !== frame.height) {
+      source.width = frame.width;
+      source.height = frame.height;
+    }
+    const ctx = source.getContext('2d');
+    ctx?.putImageData(frame, 0, 0);
   }, []);
+
+  // Central place to move to a given GIF frame: updates the index ref (used by
+  // the playback loop), the index state (used by the UI), draws it, and
+  // triggers reprocessing through the shared dithering pipeline.
+  const setGifIndex = useCallback((index: number) => {
+    const frames = gifFramesRef.current;
+    if (frames.length === 0) return;
+    const clamped = Math.max(0, Math.min(frames.length - 1, index));
+    gifIndexRef.current = clamped;
+    setGifFrameIndex(clamped);
+    drawGifFrameToSource(clamped);
+    setFrameVersion((v) => v + 1);
+  }, [drawGifFrameToSource]);
+
+  const pauseGifPlayback = useCallback(() => {
+    if (gifPlaybackTimeoutRef.current !== null) {
+      clearTimeout(gifPlaybackTimeoutRef.current);
+      gifPlaybackTimeoutRef.current = null;
+    }
+    setIsGifPlaying(false);
+  }, []);
+
+  const toggleGifPlayback = useCallback(() => {
+    if (gifPlaybackTimeoutRef.current !== null) {
+      pauseGifPlayback();
+      return;
+    }
+    setIsGifPlaying(true);
+    const tick = () => {
+      const frames = gifFramesRef.current;
+      if (frames.length === 0) return;
+      const next = (gifIndexRef.current + 1) % frames.length;
+      setGifIndex(next);
+      const delay = gifDelaysRef.current[next] ?? 100;
+      gifPlaybackTimeoutRef.current = window.setTimeout(tick, delay);
+    };
+    const firstDelay = gifDelaysRef.current[gifIndexRef.current] ?? 100;
+    gifPlaybackTimeoutRef.current = window.setTimeout(tick, firstDelay);
+  }, [pauseGifPlayback, setGifIndex]);
+
+  const stepGifFrame = useCallback((direction: 1 | -1) => {
+    pauseGifPlayback();
+    setGifIndex(gifIndexRef.current + direction);
+  }, [pauseGifPlayback, setGifIndex]);
+
+  const scrubGifTo = useCallback((index: number) => {
+    pauseGifPlayback();
+    setGifIndex(index);
+  }, [pauseGifPlayback, setGifIndex]);
+
+  const handleGifLoad = useCallback(async (file: File) => {
+    resetVideoElement();
+    resetGifPlayback();
+    const arrayBuffer = await file.arrayBuffer();
+    const { frames, delays, width, height } = decodeGifFrames(arrayBuffer);
+    if (frames.length === 0) return;
+
+    gifFramesRef.current = frames;
+    gifDelaysRef.current = delays;
+    gifIndexRef.current = 0;
+
+    setMediaType('gif');
+    setMediaDims({ width, height });
+    setGifFrameCount(frames.length);
+    setGifFrameIndex(0);
+    drawGifFrameToSource(0);
+    setFrameVersion((v) => v + 1);
+  }, [resetVideoElement, resetGifPlayback, drawGifFrameToSource]);
 
   // Draw whatever the video element is currently showing into the source canvas
   const drawVideoFrameToSource = useCallback(() => {
@@ -545,11 +705,73 @@ export default function ImageProcessor() {
     return () => cancelAnimationFrame(rafId);
   }, [mediaType, drawVideoFrameToSource, renderFrameToOutput]);
 
+  const handleRenderGifVideo = useCallback(async () => {
+    const output = canvasRef.current;
+    const frames = gifFramesRef.current;
+    const delays = gifDelaysRef.current;
+    if (!output || frames.length === 0) return;
+
+    if (typeof MediaRecorder === 'undefined' || typeof output.captureStream !== 'function') {
+      alert('Rendering video isn\'t supported in this browser. Try Chrome, Edge, or Firefox on desktop.');
+      return;
+    }
+
+    pauseGifPlayback();
+    setIsRenderingVideo(true);
+    setRenderProgress(0);
+
+    setGifIndex(0);
+    renderFrameToOutput();
+
+    const stream = output.captureStream(30);
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks: Blob[] = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    const finished = new Promise<void>((resolve) => {
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dither-dog-${Date.now()}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setIsRenderingVideo(false);
+        setRenderProgress(0);
+        resolve();
+      };
+    });
+
+    recorder.start();
+
+    for (let i = 0; i < frames.length; i++) {
+      setGifIndex(i);
+      renderFrameToOutput();
+      setRenderProgress(((i + 1) / frames.length) * 100);
+      await new Promise((resolve) => setTimeout(resolve, delays[i] ?? 100));
+    }
+
+    recorder.stop();
+    await finished;
+  }, [pauseGifPlayback, setGifIndex, renderFrameToOutput]);
+
   // Revoke the object URL for any loaded video when it's replaced or unmounted
   useEffect(() => {
     return () => {
       if (videoObjectUrlRef.current) {
         URL.revokeObjectURL(videoObjectUrlRef.current);
+      }
+      if (gifPlaybackTimeoutRef.current !== null) {
+        clearTimeout(gifPlaybackTimeoutRef.current);
       }
     };
   }, []);
@@ -590,12 +812,14 @@ export default function ImageProcessor() {
   }, [mediaDims, frameVersion, params, renderFrameToOutput]);
 
   const loadFile = useCallback((file: File) => {
-    if (file.type.startsWith('video/')) {
+    if (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')) {
+      handleGifLoad(file);
+    } else if (file.type.startsWith('video/')) {
       handleVideoLoad(file);
     } else if (file.type.startsWith('image/')) {
       handleImageLoad(file);
     }
-  }, [handleVideoLoad, handleImageLoad]);
+  }, [handleGifLoad, handleVideoLoad, handleImageLoad]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -914,7 +1138,7 @@ export default function ImageProcessor() {
               htmlFor="file-input"
               className="block w-full px-4 py-5 glass-button-primary text-white text-lg font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
             >
-              {hasMedia ? 'Change Media' : 'Load Image or Video'}
+              {hasMedia ? 'Change Media' : 'Load Image, GIF, or Video'}
             </label>
           </div>
 
@@ -1189,7 +1413,7 @@ export default function ImageProcessor() {
                     </span>
                   </div>
                 </div>
-                {mediaType === 'video' ? (
+                {mediaType === 'video' || mediaType === 'gif' ? (
                   <div className="space-y-3">
                     <button
                       onClick={handleExport}
@@ -1199,7 +1423,7 @@ export default function ImageProcessor() {
                       Save Frame
                     </button>
                     <button
-                      onClick={handleRenderVideo}
+                      onClick={mediaType === 'video' ? handleRenderVideo : handleRenderGifVideo}
                       disabled={isProcessing || isRenderingVideo}
                       className="w-full px-6 py-3 glass-button text-white text-sm font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
@@ -1254,7 +1478,7 @@ export default function ImageProcessor() {
               />
             </svg>
             <p className="text-white/60 text-xl font-bold mb-12 tracking-wide">
-              {isDragOver ? 'Drop It Here' : 'Load An Image Or Video To Start Or Drag & Drop'}
+              {isDragOver ? 'Drop It Here' : 'Load An Image, GIF, Or Video To Start Or Drag & Drop'}
             </p>
             <label
               htmlFor="file-input"
@@ -1296,7 +1520,7 @@ export default function ImageProcessor() {
                   className="rounded-2xl block"
                   style={{
                     maxWidth: isMobile ? 'calc(100vw - 4rem)' : 'calc(100vw - 30rem)',
-                    maxHeight: mediaType === 'video' ? 'calc(100vh - 21rem)' : 'calc(100vh - 16rem)',
+                    maxHeight: mediaType === 'video' || mediaType === 'gif' ? 'calc(100vh - 21rem)' : 'calc(100vh - 16rem)',
                     width: 'auto',
                     height: 'auto'
                   }}
@@ -1304,15 +1528,15 @@ export default function ImageProcessor() {
               </div>
             </div>
 
-            {/* Video Timeline — scrub, step, and play/pause frame-by-frame */}
-            {mediaType === 'video' && (
+            {/* Timeline — scrub, step, and play/pause frame-by-frame (video or gif) */}
+            {(mediaType === 'video' || mediaType === 'gif') && (
               <div
                 className="glass-panel w-full rounded-2xl"
                 style={{ maxWidth: '40rem', padding: '0.75rem 1.25rem', marginBottom: '0.75rem' }}
               >
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => stepVideoFrame(-1)}
+                    onClick={() => (mediaType === 'video' ? stepVideoFrame(-1) : stepGifFrame(-1))}
                     disabled={isRenderingVideo}
                     className="flex items-center justify-center glass-button-primary text-white font-bold rounded-lg disabled:opacity-50"
                     style={{ width: '2.25rem', height: '2.25rem', flexShrink: 0 }}
@@ -1322,17 +1546,17 @@ export default function ImageProcessor() {
                   </button>
 
                   <button
-                    onClick={toggleVideoPlayback}
+                    onClick={mediaType === 'video' ? toggleVideoPlayback : toggleGifPlayback}
                     disabled={isRenderingVideo}
                     className="flex items-center justify-center glass-button-primary text-white font-bold rounded-lg disabled:opacity-50"
                     style={{ width: '2.5rem', height: '2.5rem', flexShrink: 0 }}
-                    title={isVideoPlaying ? 'Pause' : 'Play'}
+                    title={(mediaType === 'video' ? isVideoPlaying : isGifPlaying) ? 'Pause' : 'Play'}
                   >
-                    <span style={{ fontSize: '1rem' }}>{isVideoPlaying ? '⏸' : '▶'}</span>
+                    <span style={{ fontSize: '1rem' }}>{(mediaType === 'video' ? isVideoPlaying : isGifPlaying) ? '⏸' : '▶'}</span>
                   </button>
 
                   <button
-                    onClick={() => stepVideoFrame(1)}
+                    onClick={() => (mediaType === 'video' ? stepVideoFrame(1) : stepGifFrame(1))}
                     disabled={isRenderingVideo}
                     className="flex items-center justify-center glass-button-primary text-white font-bold rounded-lg disabled:opacity-50"
                     style={{ width: '2.25rem', height: '2.25rem', flexShrink: 0 }}
@@ -1341,22 +1565,37 @@ export default function ImageProcessor() {
                     <span style={{ fontSize: '0.9rem' }}>⏭</span>
                   </button>
 
-                  <input
-                    type="range"
-                    min={0}
-                    max={videoDuration || 0}
-                    step={VIDEO_FRAME_DURATION}
-                    value={videoCurrentTime}
-                    disabled={isRenderingVideo}
-                    onChange={(e) => scrubVideoTo(Number(e.target.value))}
-                    className="flex-1 h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-[var(--accent)] disabled:opacity-50"
-                  />
+                  {mediaType === 'video' ? (
+                    <input
+                      type="range"
+                      min={0}
+                      max={videoDuration || 0}
+                      step={VIDEO_FRAME_DURATION}
+                      value={videoCurrentTime}
+                      disabled={isRenderingVideo}
+                      onChange={(e) => scrubVideoTo(Number(e.target.value))}
+                      className="flex-1 h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-[var(--accent)] disabled:opacity-50"
+                    />
+                  ) : (
+                    <input
+                      type="range"
+                      min={0}
+                      max={Math.max(0, gifFrameCount - 1)}
+                      step={1}
+                      value={gifFrameIndex}
+                      disabled={isRenderingVideo}
+                      onChange={(e) => scrubGifTo(Number(e.target.value))}
+                      className="flex-1 h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-[var(--accent)] disabled:opacity-50"
+                    />
+                  )}
 
                   <span
                     className="font-mono text-xs font-bold text-white/70"
                     style={{ minWidth: '5.5rem', textAlign: 'right', flexShrink: 0 }}
                   >
-                    {formatTime(videoCurrentTime)} / {formatTime(videoDuration)}
+                    {mediaType === 'video'
+                      ? `${formatTime(videoCurrentTime)} / ${formatTime(videoDuration)}`
+                      : `${gifFrameIndex + 1} / ${gifFrameCount}`}
                   </span>
                 </div>
               </div>
