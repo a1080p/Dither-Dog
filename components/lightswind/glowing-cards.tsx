@@ -154,7 +154,7 @@ export const GlowingCards: React.FC<GlowingCardsProps> = ({
       >
         <div
           className={cn(
-            "flex items-center justify-center flex-wrap gap-[var(--gap)]",
+            "flex items-stretch justify-center flex-wrap gap-[var(--gap)]",
             responsive && "flex-col sm:flex-row "
           )}
         >
@@ -179,7 +179,7 @@ export const GlowingCards: React.FC<GlowingCardsProps> = ({
           >
             <div
               className={cn(
-                "flex items-center justify-center flex-wrap gap-[var(--gap)] max-w-[var(--max-width)] center mx-auto",
+                "flex items-stretch justify-center flex-wrap gap-[var(--gap)] max-w-[var(--max-width)] center mx-auto",
                 responsive && "flex-col sm:flex-row"
               )}
               style={{ padding: "var(--padding)" }} // String literal
