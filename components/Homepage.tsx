@@ -177,6 +177,9 @@ export default function Homepage() {
             >
               GitHub
             </a>
+            <a href="mailto:aidand510@gmail.com" className="hover:text-white/80">
+              Contact
+            </a>
             <a
               href="https://buymeacoffee.com/GreattAidan"
               target="_blank"

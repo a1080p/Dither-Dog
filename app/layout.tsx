@@ -1,15 +1,61 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { doto, alliance } from "./fonts";
 import "./globals.css";
 
+const siteUrl = "https://ditherdog.tech";
+const title = "Dither Dog - Image, Video & GIF Dithering App";
+const description =
+  "Turn any photo, video, or GIF into pixel-precise dithered art. 28 dithering algorithms and 23 color palettes, rendered entirely client-side in your browser — free, private, no uploads.";
+
 export const metadata: Metadata = {
-  title: "Dither Dog - Image, Video & GIF Dithering App",
-  description: "A modern image, video, and GIF processing application with dithering effects",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: title,
+    template: "%s | Dither Dog",
+  },
+  description,
+  keywords: [
+    "dithering",
+    "image dithering",
+    "video dithering",
+    "gif dithering",
+    "Floyd-Steinberg dithering",
+    "Bayer dithering",
+    "pixel art generator",
+    "retro image effect",
+    "halftone effect",
+    "1-bit image converter",
+    "free online dithering tool",
+  ],
+  authors: [{ name: "Aidan" }],
+  creator: "Aidan",
+  applicationName: "Dither Dog",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+    },
+  },
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    siteName: "Dither Dog",
+    title,
+    description,
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Dither Dog" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/opengraph-image"],
   },
   icons: {
     icon: [
@@ -25,6 +71,13 @@ export const metadata: Metadata = {
       { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#0a0a0b',
 };
 
 export default function RootLayout({
