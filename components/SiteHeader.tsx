@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,9 +22,13 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "com
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 md:px-8">
         <Link href="/" className="flex items-center gap-2 no-underline">
-          <span className="flex h-6 w-6 items-center justify-center rounded-[3px] bg-[var(--accent)] font-dd-mono text-[10px] font-bold text-black">
-            DD
-          </span>
+          <Image
+            src="/apple-touch-icon.png"
+            alt="Dither Dog logo"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-[3px]"
+          />
           <span
             className={`font-doto tracking-wide text-white ${compact ? "text-sm" : "text-base md:text-lg"}`}
             style={{ fontWeight: 700 }}

@@ -3,8 +3,8 @@ import Link from "next/link";
 import { CornerMarks } from "./CornerMarks";
 
 const stats = [
-  { value: "29+", label: "Dither Algorithms" },
-  { value: "30+", label: "Color Palettes" },
+  { value: "28", label: "Dither Algorithms" },
+  { value: "23", label: "Color Palettes" },
   { value: "100%", label: "Client-Side" },
 ];
 
@@ -88,7 +88,7 @@ export default function Homepage() {
         <div className="grid grid-cols-3 gap-8 text-center">
           {stats.map((stat) => (
             <div key={stat.label}>
-              <div className="font-doto text-white" style={{ fontWeight: 700, fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}>
+              <div className="font-subheader text-white" style={{ fontWeight: 700, fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}>
                 {stat.value}
               </div>
               <div className="dd-label mt-2">{stat.label}</div>
