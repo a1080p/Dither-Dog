@@ -138,6 +138,13 @@
   font-family: var(--font-doto), var(--dd-mono);
 }
 
+/* Subheaders — everything below each page's main (Doto) heading */
+.font-subheader {
+  font-family: "purista-web", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .font-dd-mono {
   font-family: var(--dd-mono);
 }

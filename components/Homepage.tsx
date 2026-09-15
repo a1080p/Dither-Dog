@@ -100,7 +100,7 @@ export default function Homepage() {
       {/* Feature grid */}
       <section className="mx-auto max-w-6xl px-6 py-20 md:px-8 md:py-24">
         <h2
-          className="mb-12 font-doto text-white"
+          className="mb-12 font-subheader text-white"
           style={{ fontWeight: 700, fontSize: "clamp(1.5rem, 3.5vw, 2rem)" }}
         >
           Every dithering method, tuned for real use.
@@ -109,7 +109,7 @@ export default function Homepage() {
           {features.map((f) => (
             <div key={f.tag} className="bg-[var(--background)] p-8">
               <div className="dd-label mb-4" style={{ color: "var(--accent)" }}>{f.tag}</div>
-              <h3 className="mb-3 text-lg font-semibold text-white">{f.title}</h3>
+              <h3 className="font-subheader mb-3 text-lg font-semibold text-white">{f.title}</h3>
               <p className="text-sm leading-relaxed text-white/50">{f.desc}</p>
             </div>
           ))}
@@ -120,7 +120,7 @@ export default function Homepage() {
       <section id="presets" className="border-t border-white/10 py-20 md:py-24">
         <div className="mx-auto max-w-6xl px-6 md:px-8">
           <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-            <h2 className="font-doto text-white" style={{ fontWeight: 700, fontSize: "clamp(1.5rem, 3.5vw, 2rem)" }}>
+            <h2 className="font-subheader text-white" style={{ fontWeight: 700, fontSize: "clamp(1.5rem, 3.5vw, 2rem)" }}>
               Curated presets, ready to try.
             </h2>
             <Link href="/workspace" className="dd-label transition-colors hover:text-white">
@@ -136,7 +136,7 @@ export default function Homepage() {
       {/* CTA */}
       <section className="border-t border-white/10 py-20 text-center md:py-28">
         <h2
-          className="font-doto text-white"
+          className="font-subheader text-white"
           style={{ fontWeight: 700, fontSize: "clamp(1.75rem, 4.5vw, 2.75rem)" }}
         >
           Ready to dither?

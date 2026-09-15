@@ -73,7 +73,7 @@ export default function AboutPage() {
             <div className="features-container" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1 }}>
                 <h2
-                  className="text-2xl font-bold text-white"
+                  className="font-subheader text-2xl font-bold text-white"
                   style={{ marginBottom: '0.75rem' }}
                 >
                   Features
@@ -107,7 +107,7 @@ export default function AboutPage() {
             </div>
 
             <h2
-              className="text-2xl font-bold text-white"
+              className="font-subheader text-2xl font-bold text-white"
               style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}
             >
               Privacy
@@ -120,7 +120,7 @@ export default function AboutPage() {
             </p>
 
             <h2
-              className="text-2xl font-bold text-white"
+              className="font-subheader text-2xl font-bold text-white"
               style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}
             >
               Open Source
