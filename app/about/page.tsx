@@ -123,6 +123,51 @@ export default function AboutPage() {
               className="font-subheader text-2xl font-bold text-white"
               style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}
             >
+              Why It&apos;s Free
+            </h2>
+            <p
+              className="text-white/90 text-lg"
+              style={{ marginBottom: '1rem' }}
+            >
+              I wanted this app to be free. Real dithering tools are often
+              locked behind subscriptions or bundled into expensive creative
+              suites, and I didn&apos;t think they should be — designers should
+              be able to reach for something like this without having to pay
+              for it first.
+            </p>
+            <p
+              className="text-white/90 text-lg"
+              style={{ marginBottom: '1.5rem' }}
+            >
+              Building Dither Dog has also been a way for me to keep honing
+              my own design craft: shipping a small, useful tool end to end,
+              in public, for anyone to use. If it&apos;s been helpful to you
+              and you&apos;d like to support future updates, you can{' '}
+              <a
+                href="https://buymeacoffee.com/GreattAidan"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--accent)] hover:opacity-80 font-semibold"
+                style={{ textDecoration: 'underline' }}
+              >
+                buy me a coffee
+              </a>
+              .
+            </p>
+            <a
+              href="https://buymeacoffee.com/GreattAidan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dd-btn dd-btn-primary no-underline"
+              style={{ marginBottom: '0.5rem' }}
+            >
+              ☕ Buy Me a Coffee
+            </a>
+
+            <h2
+              className="font-subheader text-2xl font-bold text-white"
+              style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}
+            >
               Open Source
             </h2>
             <p

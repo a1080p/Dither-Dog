@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CornerMarks } from "./CornerMarks";
 
 const stats = [
   { value: "28", label: "Dither Algorithms" },
@@ -65,7 +64,6 @@ export default function Homepage() {
           </div>
 
           <div className="relative mx-auto w-full max-w-sm md:max-w-none">
-            <CornerMarks />
             <div className="overflow-hidden rounded-2xl">
               <div className="relative aspect-square w-full">
                 <video
