@@ -410,23 +410,32 @@ export function applyAtkinson(imageData: ImageData, intensity: number = 1, _scal
 /**
  * Jarvis-Judice-Ninke dithering
  */
-export function applyJarvisJudiceNinke(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
+export function applyJarvisJudiceNinke(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
+  const threshold = 128 / scale;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const newGray = gray < 128 ? 0 : 255;
+      const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
 
       const diffuse = (dx: number, dy: number, amount: number) => {
-        if (x + dx >= 0 && x + dx < width && y + dy < height) {
-          const i = ((y + dy) * width + (x + dx)) * 4;
+        const px = x + dx * cellSize;
+        const py = y + dy * cellSize;
+        if (px >= 0 && px < width && py < height) {
+          const i = (py * width + px) * 4;
           data[i] += error * amount / 48;
           data[i + 1] += error * amount / 48;
           data[i + 2] += error * amount / 48;
@@ -445,23 +454,32 @@ export function applyJarvisJudiceNinke(imageData: ImageData, intensity: number =
 /**
  * Stucki dithering
  */
-export function applyStucki(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
+export function applyStucki(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
+  const threshold = 128 / scale;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const newGray = gray < 128 ? 0 : 255;
+      const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
 
       const diffuse = (dx: number, dy: number, amount: number) => {
-        if (x + dx >= 0 && x + dx < width && y + dy < height) {
-          const i = ((y + dy) * width + (x + dx)) * 4;
+        const px = x + dx * cellSize;
+        const py = y + dy * cellSize;
+        if (px >= 0 && px < width && py < height) {
+          const i = (py * width + px) * 4;
           data[i] += error * amount / 42;
           data[i + 1] += error * amount / 42;
           data[i + 2] += error * amount / 42;
@@ -480,23 +498,32 @@ export function applyStucki(imageData: ImageData, intensity: number = 1, _scale:
 /**
  * Burkes dithering
  */
-export function applyBurkes(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData{
+export function applyBurkes(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData{
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
+  const threshold = 128 / scale;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const newGray = gray < 128 ? 0 : 255;
+      const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
 
       const diffuse = (dx: number, dy: number, amount: number) => {
-        if (x + dx >= 0 && x + dx < width && y + dy < height) {
-          const i = ((y + dy) * width + (x + dx)) * 4;
+        const px = x + dx * cellSize;
+        const py = y + dy * cellSize;
+        if (px >= 0 && px < width && py < height) {
+          const i = (py * width + px) * 4;
           data[i] += error * amount / 32;
           data[i + 1] += error * amount / 32;
           data[i + 2] += error * amount / 32;
@@ -514,23 +541,32 @@ export function applyBurkes(imageData: ImageData, intensity: number = 1, _scale:
 /**
  * Sierra dithering
  */
-export function applySierra(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
+export function applySierra(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
+  const threshold = 128 / scale;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const newGray = gray < 128 ? 0 : 255;
+      const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
 
       const diffuse = (dx: number, dy: number, amount: number) => {
-        if (x + dx >= 0 && x + dx < width && y + dy < height) {
-          const i = ((y + dy) * width + (x + dx)) * 4;
+        const px = x + dx * cellSize;
+        const py = y + dy * cellSize;
+        if (px >= 0 && px < width && py < height) {
+          const i = (py * width + px) * 4;
           data[i] += error * amount / 32;
           data[i + 1] += error * amount / 32;
           data[i + 2] += error * amount / 32;
@@ -549,23 +585,32 @@ export function applySierra(imageData: ImageData, intensity: number = 1, _scale:
 /**
  * Sierra Lite dithering
  */
-export function applySierraLite(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
+export function applySierraLite(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
+  const threshold = 128 / scale;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const newGray = gray < 128 ? 0 : 255;
+      const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
 
       const diffuse = (dx: number, dy: number, amount: number) => {
-        if (x + dx >= 0 && x + dx < width && y + dy < height) {
-          const i = ((y + dy) * width + (x + dx)) * 4;
+        const px = x + dx * cellSize;
+        const py = y + dy * cellSize;
+        if (px >= 0 && px < width && py < height) {
+          const i = (py * width + px) * 4;
           data[i] += error * amount / 4;
           data[i + 1] += error * amount / 4;
           data[i + 2] += error * amount / 4;
@@ -583,23 +628,32 @@ export function applySierraLite(imageData: ImageData, intensity: number = 1, _sc
 /**
  * Two-Row Sierra dithering
  */
-export function applyTwoRowSierra(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
+export function applyTwoRowSierra(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
+  const threshold = 128 / scale;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const newGray = gray < 128 ? 0 : 255;
+      const newGray = gray < threshold ? 0 : 255;
       const error = (gray - newGray) * intensity;
 
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
 
       const diffuse = (dx: number, dy: number, amount: number) => {
-        if (x + dx >= 0 && x + dx < width && y + dy < height) {
-          const i = ((y + dy) * width + (x + dx)) * 4;
+        const px = x + dx * cellSize;
+        const py = y + dy * cellSize;
+        if (px >= 0 && px < width && py < height) {
+          const i = (py * width + px) * 4;
           data[i] += error * amount / 16;
           data[i + 1] += error * amount / 16;
           data[i + 2] += error * amount / 16;
@@ -657,18 +711,25 @@ export function applyBayer8x8(imageData: ImageData, _scale: number = 1, _size: n
 /**
  * Random dithering
  */
-export function applyRandomDither(imageData: ImageData, intensity: number = 1): ImageData {
+export function applyRandomDither(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const threshold = 128 + (Math.random() - 0.5) * 128 * intensity;
+      const threshold = 128 + (Math.random() - 0.5) * 128 * intensity * scale;
       const newGray = gray > threshold ? 255 : 0;
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
     }
   }
 
@@ -1021,18 +1082,25 @@ export function applyClusteredDot(imageData: ImageData, _scale: number = 1, _siz
  * White Noise Dithering
  * Simple random threshold dithering
  */
-export function applyWhiteNoise(imageData: ImageData, _scale: number = 1, _size: number = 1): ImageData {
+export function applyWhiteNoise(imageData: ImageData, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  for (let y = 0; y < height; y += cellSize) {
+    for (let x = 0; x < width; x += cellSize) {
       const idx = (y * width + x) * 4;
       const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
-      const threshold = (Math.random() * 255)  * _scale;
+      const threshold = (Math.random() * 255) * scale;
       const newGray = gray > threshold ? 255 : 0;
-      data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+
+      for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+        for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+          const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+          data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+        }
+      }
     }
   }
 
@@ -1043,10 +1111,11 @@ export function applyWhiteNoise(imageData: ImageData, _scale: number = 1, _size:
  * Riemersma Dithering
  * Space-filling curve dithering using Hilbert curve traversal
  */
-export function applyRiemersma(imageData: ImageData, intensity: number = 1, _scale: number = 1, _size: number = 1): ImageData {
+export function applyRiemersma(imageData: ImageData, intensity: number = 1, scale: number = 1, size: number = 1): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
   const width = imageData.width;
   const height = imageData.height;
+  const cellSize = Math.max(1, Math.floor(size));
   const errorQueueSize = 16;
   const errorQueue: number[] = [];
   const weights: number[] = [];
@@ -1072,8 +1141,10 @@ export function applyRiemersma(imageData: ImageData, intensity: number = 1, _sca
     }
   }
 
-  // Process pixels along curve
+  // Process pixels along curve, one cell (cellSize x cellSize block) at a time
   for (const {x, y} of points) {
+    if (x % cellSize !== 0 || y % cellSize !== 0) continue;
+
     const idx = (y * width + x) * 4;
     const gray = toGrayscale(data[idx], data[idx + 1], data[idx + 2]);
 
@@ -1089,11 +1160,16 @@ export function applyRiemersma(imageData: ImageData, intensity: number = 1, _sca
     }
 
     const adjustedGray = gray + weightedError * intensity;
-    const threshold = 128 / _scale;
+    const threshold = 128 / scale;
     const newGray = adjustedGray < threshold ? 0 : 255;
     const error = adjustedGray - newGray;
 
-    data[idx] = data[idx + 1] = data[idx + 2] = newGray;
+    for (let dy = 0; dy < cellSize && y + dy < height; dy++) {
+      for (let dx = 0; dx < cellSize && x + dx < width; dx++) {
+        const cellIdx = ((y + dy) * width + (x + dx)) * 4;
+        data[cellIdx] = data[cellIdx + 1] = data[cellIdx + 2] = newGray;
+      }
+    }
 
     // Add error to queue
     errorQueue.unshift(error);
@@ -1407,7 +1483,7 @@ export function processImage(
           processed = applyBayer8x8(processed, params.effectScale, params.effectSize);
           break;
         case 'random':
-          processed = applyRandomDither(processed, params.ditherIntensity);
+          processed = applyRandomDither(processed, params.ditherIntensity, params.effectScale, params.effectSize);
           break;
         case 'ordered':
           processed = applyBayer4x4(processed, params.effectScale, params.effectSize);
