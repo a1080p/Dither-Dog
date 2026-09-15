@@ -50,9 +50,11 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <Link href="/workspace" className="dd-btn dd-btn-primary !py-2 !px-4 text-xs no-underline">
-          Open Workspace
-        </Link>
+        {pathname !== "/workspace" && (
+          <Link href="/workspace" className="dd-btn dd-btn-primary !py-2 !px-4 text-xs no-underline">
+            Open Workspace
+          </Link>
+        )}
       </div>
     </header>
   );

@@ -251,6 +251,86 @@ const presets: Preset[] = [
       invert: false,
     }
   },
+  {
+    name: 'Pixel Rot',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'bayer-2x2',
+      colorPalette: 'commodore64',
+      ditherContrast: 190,
+      effectScale: 2,
+      effectSize: 16,
+      brightness: -10,
+      contrast: 35,
+      blur: 0,
+      depth: 14,
+      invert: false,
+    }
+  },
+  {
+    name: 'Broken Signal',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'random',
+      colorPalette: 'red-black',
+      ditherContrast: 185,
+      effectScale: 1.8,
+      effectSize: 14,
+      brightness: 5,
+      contrast: 30,
+      blur: 0.3,
+      depth: 16,
+      invert: false,
+    }
+  },
+  {
+    name: 'Cheap Print',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'ordered',
+      colorPalette: 'blue-white',
+      ditherContrast: 165,
+      effectScale: 1.9,
+      effectSize: 15,
+      brightness: 0,
+      contrast: 25,
+      blur: 0,
+      depth: 18,
+      invert: false,
+    }
+  },
+  {
+    name: 'Scanline Rot',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'vertical-lines',
+      colorPalette: 'green-black',
+      ditherContrast: 175,
+      effectScale: 1.7,
+      effectSize: 13,
+      brightness: -5,
+      contrast: 28,
+      blur: 0,
+      depth: 15,
+      invert: false,
+    }
+  },
+  {
+    name: 'Doodle Spiral',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'spiral',
+      colorPalette: 'orange-blue',
+      ditherContrast: 160,
+      effectScale: 1.6,
+      effectSize: 14,
+      brightness: 10,
+      contrast: 22,
+      blur: 0.2,
+      depth: 20,
+      invert: false,
+    }
+  },
 ];
 
 type MediaType = 'image' | 'video' | 'gif' | null;
@@ -457,6 +537,28 @@ export default function ImageProcessor() {
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
+  }, [resetVideoElement, resetGifPlayback]);
+
+  // Loads an image straight from a same-origin URL (e.g. the site logo) rather
+  // than a File — used to seed the canvas when a preset is opened from a link.
+  const loadImageFromUrl = useCallback((url: string) => {
+    resetVideoElement();
+    resetGifPlayback();
+    const img = new Image();
+    img.onload = () => {
+      if (sourceCanvasRef.current) {
+        const ctx = sourceCanvasRef.current.getContext('2d');
+        if (ctx) {
+          sourceCanvasRef.current.width = img.width;
+          sourceCanvasRef.current.height = img.height;
+          ctx.drawImage(img, 0, 0);
+        }
+      }
+      setMediaType('image');
+      setMediaDims({ width: img.width, height: img.height });
+      setFrameVersion((v) => v + 1);
+    };
+    img.src = url;
   }, [resetVideoElement, resetGifPlayback]);
 
   const handleVideoLoad = useCallback((file: File) => {
@@ -988,6 +1090,17 @@ export default function ImageProcessor() {
     }
   };
 
+  // Opening /workspace?preset=<name> (e.g. from a homepage preset card) loads
+  // the site logo as a stand-in image so the preset has something to preview.
+  useEffect(() => {
+    const presetName = new URLSearchParams(window.location.search).get('preset');
+    if (presetName && presets.some((p) => p.name === presetName)) {
+      loadImageFromUrl('/apple-touch-icon.png');
+      applyPreset(presetName);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Slider component with drag-to-release behavior
   const SliderControl = ({
     label,
@@ -1231,10 +1344,10 @@ export default function ImageProcessor() {
           <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
             <button
               onClick={() => updateParam('invert', !params.invert)}
-              className={`w-full px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
+              className={`w-full px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer active:scale-[0.97] ${
                 params.invert
                   ? 'glass-button-primary text-white'
-                  : 'glass-panel text-white/60 hover:text-white'
+                  : 'glass-panel text-white/60 border border-white/10 hover:text-white hover:border-white/25 hover:bg-white/[0.04]'
               }`}
             >
               {params.invert ? 'Invert: On' : 'Invert: Off'}

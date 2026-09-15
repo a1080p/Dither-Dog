@@ -41,6 +41,11 @@ const presets = [
   { name: "Static TV", algorithm: "White Noise", palette: "Black & White", desc: "Pure television static, frozen mid-frame." },
   { name: "Organic Curves", algorithm: "Riemersma", palette: "Burgundy & Cream", desc: "Space-filling curves for a hand-drawn, organic texture." },
   { name: "Adaptive Dream", algorithm: "Variable Error", palette: "Lavender & Sage", desc: "Adaptive error diffusion in a soft lavender-sage palette." },
+  { name: "Pixel Rot", algorithm: "Bayer 2x2", palette: "Commodore 64", desc: "Chunky 2x2 ordered dither pushed until it falls apart into blocky pixel rot.", stylized: true },
+  { name: "Broken Signal", algorithm: "Random", palette: "Red & Black", desc: "Pure random dithering — no structure, just degraded VHS-static red.", stylized: true },
+  { name: "Cheap Print", algorithm: "Ordered", palette: "Blue & White", desc: "Bargain-bin dot-matrix printing, muddy and low-res on purpose.", stylized: true },
+  { name: "Scanline Rot", algorithm: "Vertical Lines", palette: "Green & Black", desc: "Crude vertical scanlines like a dying CRT losing sync.", stylized: true },
+  { name: "Doodle Spiral", algorithm: "Spiral", palette: "Orange & Blue", desc: "Loose hand-doodled spiral dithering, rough and unpolished.", stylized: true },
 ];
 
 export default function Homepage() {
@@ -153,14 +158,30 @@ export default function Homepage() {
           </p>
           <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
             {presets.map((p) => (
-              <div key={p.name} className="bg-[var(--background)] p-6">
-                <h3 className="font-subheader mb-2 text-sm font-semibold text-white">{p.name}</h3>
-                <p className="mb-4 text-sm leading-relaxed text-white/50">{p.desc}</p>
-                <div className="flex flex-wrap gap-2">
-                  <span className="dd-chip-outline text-[10px]">{p.algorithm}</span>
-                  <span className="dd-chip-outline text-[10px]">{p.palette}</span>
+              <Link
+                key={p.name}
+                href={`/workspace?preset=${encodeURIComponent(p.name)}`}
+                className="group block bg-[var(--background)] p-6 no-underline transition-colors hover:bg-white/[0.04]"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h3 className="font-subheader text-sm font-semibold text-white">{p.name}</h3>
+                  {p.stylized && (
+                    <span className="dd-chip-outline shrink-0 text-[9px]" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
+                      Stylized
+                    </span>
+                  )}
                 </div>
-              </div>
+                <p className="mb-4 text-sm leading-relaxed text-white/50">{p.desc}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="dd-chip-outline text-[10px]">{p.algorithm}</span>
+                    <span className="dd-chip-outline text-[10px]">{p.palette}</span>
+                  </div>
+                  <span className="dd-label text-[10px] opacity-0 transition-opacity group-hover:opacity-100">
+                    Try it &rarr;
+                  </span>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
