@@ -49,9 +49,9 @@ export default function Homepage() {
               Dither your<br />whole world.
             </h1>
             <p className="mt-6 max-w-md text-base leading-relaxed text-white/55 md:text-lg">
-              Turn any photo into pixel-precise art. Dozens of dithering
-              algorithms and color palettes, rendered entirely in your
-              browser — nothing is ever uploaded.
+              Turn any photo, video, or GIF into pixel-precise art. Dozens of
+              dithering algorithms and color palettes, rendered entirely in
+              your browser — nothing is ever uploaded.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link href="/workspace" className="dd-btn dd-btn-primary no-underline">
