@@ -174,11 +174,13 @@ export default function Homepage() {
             One preset, wildly different results.
           </h2>
           <div className="relative mx-auto max-w-lg overflow-hidden rounded-2xl">
-            {/* eslint-disable-next-line @next/next/no-img-element -- animated GIF must bypass next/image's optimizer */}
-            <img
-              src="/images/neon-dreams-showcase.gif"
-              alt="Neon Dreams preset applied to a photo — animated halftone dots in hot pink and cyan"
+            <video
+              src="/videos/neon-dreams-showcase.webm"
               className="h-auto w-full"
+              autoPlay
+              loop
+              muted
+              playsInline
             />
           </div>
         </div>
