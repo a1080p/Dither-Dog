@@ -154,15 +154,16 @@ export default function AboutPage() {
               </a>
               .
             </p>
-            <a
-              href="https://buymeacoffee.com/GreattAidan"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="dd-btn dd-btn-primary no-underline"
-              style={{ marginBottom: '0.5rem' }}
-            >
-              ☕ Buy Me a Coffee
-            </a>
+            <div className="text-center" style={{ marginBottom: '0.5rem' }}>
+              <a
+                href="https://buymeacoffee.com/GreattAidan"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dd-btn dd-btn-primary no-underline"
+              >
+                ☕ Buy Me a Coffee
+              </a>
+            </div>
 
             <h2
               className="font-subheader text-2xl font-bold text-white"

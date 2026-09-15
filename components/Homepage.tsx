@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GlowingCards, GlowingCard } from "@/components/lightswind/glowing-cards";
 
 const stats = [
   { value: "28", label: "Dither Algorithms" },
@@ -102,15 +103,25 @@ export default function Homepage() {
         >
           Every dithering method, tuned for real use.
         </h2>
-        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 md:grid-cols-3">
+        <GlowingCards
+          gap="1.5rem"
+          maxWidth="100%"
+          padding="0"
+          borderRadius="1rem"
+          glowRadius={22}
+        >
           {features.map((f) => (
-            <div key={f.tag} className="bg-[var(--background)] p-8">
+            <GlowingCard
+              key={f.tag}
+              glowColor="#ff5a1f"
+              className="min-w-0 flex-1 border-white/10 bg-[var(--background)]"
+            >
               <div className="dd-label mb-4" style={{ color: "var(--accent)" }}>{f.tag}</div>
               <h3 className="font-subheader mb-3 text-lg font-semibold text-white">{f.title}</h3>
               <p className="text-sm leading-relaxed text-white/50">{f.desc}</p>
-            </div>
+            </GlowingCard>
           ))}
-        </div>
+        </GlowingCards>
       </section>
 
       {/* Presets */}

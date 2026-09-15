@@ -1,5 +1,6 @@
 
-@import "tailwindcss";
+@import 'tailwindcss';
+@plugin 'lightswind/plugin';
 @import "tw-animate-css";
 
 @plugin "tailwindcss-animate";
