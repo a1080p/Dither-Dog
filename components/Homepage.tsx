@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CornerMarks } from "./CornerMarks";
 
@@ -69,13 +68,13 @@ export default function Homepage() {
             <CornerMarks />
             <div className="overflow-hidden rounded-2xl border border-white/10">
               <div className="relative aspect-square w-full">
-                <Image
-                  src="/images/DITHER DOG.png"
-                  alt="Dithered output preview"
-                  fill
-                  sizes="(min-width: 768px) 40vw, 90vw"
-                  className="object-cover"
-                  priority
+                <video
+                  src="/videos/dither-dog-hero.webm"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
                 />
               </div>
             </div>

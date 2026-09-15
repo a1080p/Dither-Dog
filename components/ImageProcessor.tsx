@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import { processImage, type ProcessingParams, type DitheringAlgorithm, type ColorPalette } from '@/lib/imageProcessing';
 
@@ -256,6 +256,27 @@ type MediaType = 'image' | 'video' | 'gif' | null;
 
 const VIDEO_FRAME_DURATION = 1 / 30; // approximate single-frame step at 30fps
 
+// Candidate MediaRecorder mime types per exportable video format, in
+// preference order. Browser support for MP4 recording is inconsistent, so
+// we only ever offer a format the current browser can actually produce.
+const VIDEO_FORMAT_CANDIDATES: Record<'webm' | 'mp4', { label: string; extension: string; mimeTypes: string[] }> = {
+  webm: {
+    label: 'WebM (.webm)',
+    extension: 'webm',
+    mimeTypes: ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'],
+  },
+  mp4: {
+    label: 'MP4 (.mp4)',
+    extension: 'mp4',
+    mimeTypes: ['video/mp4;codecs=avc1', 'video/mp4'],
+  },
+};
+
+function getSupportedMimeType(candidates: string[]): string | null {
+  if (typeof MediaRecorder === 'undefined') return null;
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? null;
+}
+
 function formatTime(seconds: number): string {
   if (!isFinite(seconds) || seconds < 0) return '0:00';
   const m = Math.floor(seconds / 60);
@@ -331,6 +352,8 @@ export default function ImageProcessor() {
   const [gifFrameIndex, setGifFrameIndex] = useState(0);
   const [gifFrameCount, setGifFrameCount] = useState(0);
   const [isGifPlaying, setIsGifPlaying] = useState(false);
+  const [imageExportFormat, setImageExportFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
+  const [videoExportFormat, setVideoExportFormat] = useState<'webm' | 'mp4'>('webm');
   const [params, setParams] = useState<ProcessingParams>({
     brightness: 0,
     contrast: 0,
@@ -359,6 +382,18 @@ export default function ImageProcessor() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for desktop
   const [isMobile, setIsMobile] = useState(false);
+
+  const availableVideoFormats = useMemo(() => {
+    return (Object.keys(VIDEO_FORMAT_CANDIDATES) as Array<'webm' | 'mp4'>).filter(
+      (format) => getSupportedMimeType(VIDEO_FORMAT_CANDIDATES[format].mimeTypes) !== null
+    );
+  }, []);
+
+  useEffect(() => {
+    if (availableVideoFormats.length > 0 && !availableVideoFormats.includes(videoExportFormat)) {
+      setVideoExportFormat(availableVideoFormats[0]);
+    }
+  }, [availableVideoFormats, videoExportFormat]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sourceCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -623,7 +658,10 @@ export default function ImageProcessor() {
     const output = canvasRef.current;
     if (!video || !output || mediaType !== 'video') return;
 
-    if (typeof MediaRecorder === 'undefined' || typeof output.captureStream !== 'function') {
+    const format = VIDEO_FORMAT_CANDIDATES[videoExportFormat];
+    const mimeType = getSupportedMimeType(format.mimeTypes);
+
+    if (!mimeType || typeof output.captureStream !== 'function') {
       alert('Rendering video isn\'t supported in this browser. Try Chrome, Edge, or Firefox on desktop.');
       return;
     }
@@ -646,9 +684,6 @@ export default function ImageProcessor() {
     renderFrameToOutput();
 
     const stream = output.captureStream(30);
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-      ? 'video/webm;codecs=vp9'
-      : 'video/webm';
     const recorder = new MediaRecorder(stream, { mimeType });
     const chunks: Blob[] = [];
 
@@ -665,11 +700,11 @@ export default function ImageProcessor() {
     };
 
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
+      const blob = new Blob(chunks, { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `dither-dog-${Date.now()}.webm`;
+      a.download = `dither-dog-${Date.now()}.${format.extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -703,7 +738,7 @@ export default function ImageProcessor() {
     rafId = requestAnimationFrame(step);
 
     return () => cancelAnimationFrame(rafId);
-  }, [mediaType, drawVideoFrameToSource, renderFrameToOutput]);
+  }, [mediaType, videoExportFormat, drawVideoFrameToSource, renderFrameToOutput]);
 
   const handleRenderGifVideo = useCallback(async () => {
     const output = canvasRef.current;
@@ -711,7 +746,10 @@ export default function ImageProcessor() {
     const delays = gifDelaysRef.current;
     if (!output || frames.length === 0) return;
 
-    if (typeof MediaRecorder === 'undefined' || typeof output.captureStream !== 'function') {
+    const format = VIDEO_FORMAT_CANDIDATES[videoExportFormat];
+    const mimeType = getSupportedMimeType(format.mimeTypes);
+
+    if (!mimeType || typeof output.captureStream !== 'function') {
       alert('Rendering video isn\'t supported in this browser. Try Chrome, Edge, or Firefox on desktop.');
       return;
     }
@@ -724,9 +762,6 @@ export default function ImageProcessor() {
     renderFrameToOutput();
 
     const stream = output.captureStream(30);
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-      ? 'video/webm;codecs=vp9'
-      : 'video/webm';
     const recorder = new MediaRecorder(stream, { mimeType });
     const chunks: Blob[] = [];
 
@@ -736,11 +771,11 @@ export default function ImageProcessor() {
 
     const finished = new Promise<void>((resolve) => {
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        const blob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dither-dog-${Date.now()}.webm`;
+        a.download = `dither-dog-${Date.now()}.${format.extension}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -762,7 +797,7 @@ export default function ImageProcessor() {
 
     recorder.stop();
     await finished;
-  }, [pauseGifPlayback, setGifIndex, renderFrameToOutput]);
+  }, [videoExportFormat, pauseGifPlayback, setGifIndex, renderFrameToOutput]);
 
   // Revoke the object URL for any loaded video when it's replaced or unmounted
   useEffect(() => {
@@ -856,8 +891,16 @@ export default function ImageProcessor() {
     }
   };
 
+  const IMAGE_FORMATS: Record<'png' | 'jpeg' | 'webp', { mimeType: string; extension: string; quality?: number }> = {
+    png: { mimeType: 'image/png', extension: 'png' },
+    jpeg: { mimeType: 'image/jpeg', extension: 'jpg', quality: 0.92 },
+    webp: { mimeType: 'image/webp', extension: 'webp', quality: 0.92 },
+  };
+
   const handleExport = () => {
     if (!canvasRef.current) return;
+    const { mimeType, extension, quality } = IMAGE_FORMATS[imageExportFormat];
+    const filename = `dither-dog-${Date.now()}.${extension}`;
 
     // Try to use Share API first (works on mobile)
     if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -865,7 +908,7 @@ export default function ImageProcessor() {
         if (!blob) return;
 
         try {
-          const file = new File([blob], `dither-dog-${Date.now()}.png`, { type: 'image/png' });
+          const file = new File([blob], filename, { type: mimeType });
 
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
@@ -880,7 +923,7 @@ export default function ImageProcessor() {
               const dataUrl = reader.result as string;
               const link = document.createElement('a');
               link.href = dataUrl;
-              link.download = `dither-dog-${Date.now()}.png`;
+              link.download = filename;
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
@@ -895,14 +938,14 @@ export default function ImageProcessor() {
             const dataUrl = reader.result as string;
             const link = document.createElement('a');
             link.href = dataUrl;
-            link.download = `dither-dog-${Date.now()}.png`;
+            link.download = filename;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
           };
           reader.readAsDataURL(blob);
         }
-      });
+      }, mimeType, quality);
     }
     // Desktop fallback
     else {
@@ -912,12 +955,12 @@ export default function ImageProcessor() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dither-dog-${Date.now()}.png`;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      });
+      }, mimeType, quality);
     }
   };
 
@@ -1136,7 +1179,7 @@ export default function ImageProcessor() {
           <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
             <label
               htmlFor="file-input"
-              className="block w-full px-4 py-5 glass-button-primary text-white text-lg font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
+              className="block w-full px-4 py-5 glass-button-primary text-white text-base font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
             >
               {hasMedia ? 'Change Media' : 'Load Image, GIF, or Video'}
             </label>
@@ -1413,6 +1456,38 @@ export default function ImageProcessor() {
                     </span>
                   </div>
                 </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-white/70">
+                    {mediaType === 'video' || mediaType === 'gif' ? 'Frame format' : 'Format'}
+                  </label>
+                  <select
+                    value={imageExportFormat}
+                    onChange={(e) => setImageExportFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
+                    className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded-xl focus:outline-none"
+                  >
+                    <option value="png">PNG (.png)</option>
+                    <option value="jpeg">JPEG (.jpg)</option>
+                    <option value="webp">WebP (.webp)</option>
+                  </select>
+                </div>
+
+                {(mediaType === 'video' || mediaType === 'gif') && availableVideoFormats.length > 0 && (
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-white/70">Video format</label>
+                    <select
+                      value={videoExportFormat}
+                      onChange={(e) => setVideoExportFormat(e.target.value as 'webm' | 'mp4')}
+                      className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded-xl focus:outline-none"
+                    >
+                      {availableVideoFormats.map((format) => (
+                        <option key={format} value={format}>
+                          {VIDEO_FORMAT_CANDIDATES[format].label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 {mediaType === 'video' || mediaType === 'gif' ? (
                   <div className="space-y-3">
                     <button
@@ -1482,7 +1557,7 @@ export default function ImageProcessor() {
             </p>
             <label
               htmlFor="file-input"
-              className="inline-block glass-button-primary text-white text-2xl font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.05] transition-all duration-300"
+              className="inline-block glass-button-primary text-white text-lg font-bold rounded-3xl cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.05] transition-all duration-300"
               style={{ letterSpacing: '0rem', paddingLeft: '3rem', paddingRight: '3rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
             >
               Choose File
