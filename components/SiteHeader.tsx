@@ -10,16 +10,11 @@ const links = [
   { href: "/about", label: "About" },
 ];
 
-export function SiteHeader({ variant = "default" }: { variant?: "default" | "compact" }) {
+export function SiteHeader() {
   const pathname = usePathname();
-  const compact = variant === "compact";
 
   return (
-    <header
-      className={`sticky top-0 z-50 w-full border-b border-white/10 bg-[#0a0a0b]/90 backdrop-blur-md ${
-        compact ? "h-14" : "h-16 md:h-20"
-      }`}
-    >
+    <header className="sticky top-0 z-50 w-full h-16 md:h-20 border-b border-white/10 bg-[#0a0a0b]/90 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 md:px-8">
         <Link href="/" className="flex items-center gap-2 no-underline">
           <Image
@@ -30,7 +25,7 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "com
             className="h-8 w-8 rounded-[3px]"
           />
           <span
-            className={`font-doto tracking-wide text-white ${compact ? "text-sm" : "text-base md:text-lg"}`}
+            className="font-doto tracking-wide text-white text-base md:text-lg"
             style={{ fontWeight: 700 }}
           >
             DITHER DOG

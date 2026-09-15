@@ -41,7 +41,7 @@ export default function Homepage() {
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-20 md:px-8 md:pb-28 md:pt-28">
         <div className="grid grid-cols-1 items-center gap-14 md:grid-cols-2 md:gap-10">
           <div>
-            <div className="dd-label mb-5">Client-Side Image Processor</div>
+            <div className="dd-label mb-5">Client-Side Image, Video &amp; GIF Processor</div>
             <h1
               className="font-doto text-white"
               style={{ fontWeight: 700, fontSize: "clamp(2.25rem, 5vw, 3.75rem)", lineHeight: 1.05, letterSpacing: "-0.01em" }}
@@ -51,7 +51,7 @@ export default function Homepage() {
             <p className="mt-6 max-w-md text-base leading-relaxed text-white/55 md:text-lg">
               Turn any photo, video, or GIF into pixel-precise art. Dozens of
               dithering algorithms and color palettes, rendered entirely in
-              your browser — nothing is ever uploaded.
+              your browser.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link href="/workspace" className="dd-btn dd-btn-primary no-underline">
@@ -165,6 +165,15 @@ export default function Homepage() {
               className="hover:text-white/80"
             >
               GitHub
+            </a>
+            <a
+              href="https://buymeacoffee.com/GreattAidan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80"
+              style={{ color: "var(--accent)" }}
+            >
+              Donate
             </a>
           </div>
         </div>

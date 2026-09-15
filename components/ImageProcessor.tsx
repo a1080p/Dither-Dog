@@ -1128,7 +1128,7 @@ export default function ImageProcessor() {
   };
 
   return (
-    <div className="flex md:flex-row flex-col h-[calc(100vh-3.5rem)] bg-gradient-dark overflow-hidden md:overflow-auto relative">
+    <div className="flex md:flex-row flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] bg-gradient-dark overflow-hidden md:overflow-auto relative">
       {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -1140,7 +1140,7 @@ export default function ImageProcessor() {
           alignItems: 'center',
           justifyContent: 'center',
           left: isSidebarOpen ? '23.5rem' : '-0.5rem',
-          top: 'calc(50% + 1.75rem)',
+          top: 'calc(50% + 2rem)',
           transform: 'translateY(-50%)',
           transition: 'left 300ms'
         }}
@@ -1162,7 +1162,7 @@ export default function ImageProcessor() {
         ref={sidebarRef}
         className={`w-[24rem] min-w-[24rem] max-w-[24rem] glass-sidebar flex flex-col overflow-y-auto flex-shrink-0 transition-transform duration-300
           md:!translate-x-0 md:relative md:z-5
-          fixed left-0 top-14 h-[calc(100%-3.5rem)] md:top-0 md:h-full z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          fixed left-0 top-16 h-[calc(100%-4rem)] md:top-0 md:h-full z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div style={{ padding: '1rem 0' }}>

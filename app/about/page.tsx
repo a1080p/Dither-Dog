@@ -59,14 +59,14 @@ export default function AboutPage() {
               className="text-white/90 text-lg"
               style={{ marginBottom: '1rem' }}
             >
-              <strong className="text-white">Dither Dog</strong> is a modern web-based image processing application specializing in dithering effects and artistic image transformations.
+              <strong className="text-white">Dither Dog</strong> is a modern web-based image, video, and GIF processing application specializing in dithering effects and artistic transformations.
             </p>
 
             <p
               className="text-white/90 text-lg"
               style={{ marginBottom: '1.5rem' }}
             >
-              Built with cutting-edge web technologies including Next.js 15, React 19, and TypeScript, Dither Dog provides real-time image processing entirely in your browser with no server uploads required.
+              Built with cutting-edge web technologies including Next.js 15, React 19, and TypeScript, Dither Dog provides real-time image, video, and GIF processing entirely in your browser with no server uploads required.
             </p>
 
             {/* Features Section with Image */}
@@ -88,11 +88,11 @@ export default function AboutPage() {
                 >
                   <li style={{ marginBottom: '0.5rem' }}>Multiple dithering algorithms including Floyd-Steinberg, Bayer matrices, and artistic patterns</li>
                   <li style={{ marginBottom: '0.5rem' }}>Extensive color palette options from classic black & white to retro gaming palettes</li>
-                  <li style={{ marginBottom: '0.5rem' }}>Real-time image adjustments with brightness, contrast, and blur controls</li>
+                  <li style={{ marginBottom: '0.5rem' }}>Real-time image, video, and GIF adjustments with brightness, contrast, and blur controls</li>
                   <li style={{ marginBottom: '0.5rem' }}>Edge detection and threshold effects</li>
                   <li style={{ marginBottom: '0.5rem' }}>Preset configurations for quick artistic styles</li>
                   <li style={{ marginBottom: '0.5rem' }}>Pan and zoom controls for detailed viewing</li>
-                  <li style={{ marginBottom: '0.5rem' }}>Download processed images instantly</li>
+                  <li style={{ marginBottom: '0.5rem' }}>Download processed images, videos, and GIFs instantly</li>
                 </ul>
               </div>
               <div className="dog-image-container" style={{ flexShrink: 0, width: '300px', marginTop: '30px' }}>
@@ -116,7 +116,7 @@ export default function AboutPage() {
               className="text-white/90 text-lg"
               style={{ marginBottom: '1.5rem' }}
             >
-              All image processing happens locally in your browser. Your images are never uploaded to any server, ensuring complete privacy and security.
+              All image, video, and GIF processing happens locally in your browser. Your files are never uploaded to any server, ensuring complete privacy and security.
             </p>
 
             <h2

@@ -4,8 +4,8 @@ import { doto, alliance } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dither Dog - Image Dithering Web App",
-  description: "A modern image processing application with dithering effects",
+  title: "Dither Dog - Image, Video & GIF Dithering App",
+  description: "A modern image, video, and GIF processing application with dithering effects",
   viewport: {
     width: 'device-width',
     initialScale: 1,

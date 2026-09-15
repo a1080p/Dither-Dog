@@ -4,7 +4,7 @@ import ImageProcessor from "@/components/ImageProcessor";
 export default function WorkspacePage() {
   return (
     <>
-      <SiteHeader variant="compact" />
+      <SiteHeader />
       <ImageProcessor />
     </>
   );
