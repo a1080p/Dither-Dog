@@ -26,13 +26,21 @@ const features = [
 ];
 
 const presets = [
-  "Classic Newspaper",
-  "Retro Game Boy",
-  "Neon Dreams",
-  "Vintage Poster",
-  "Old Terminal",
-  "Sunset Comic",
-  "Purple Matrix",
+  { name: "Classic Newspaper", algorithm: "Floyd-Steinberg", palette: "Black & White", desc: "Classic print-press grain, straight out of a 1970s broadsheet." },
+  { name: "Retro Game Boy", algorithm: "Bayer 8x8", palette: "Game Boy", desc: "Four shades of green, exactly like the handheld that started it all." },
+  { name: "Neon Dreams", algorithm: "Halftone Dots", palette: "Hot Pink & Cyan", desc: "Oversized halftone dots in blown-out arcade neon." },
+  { name: "Vintage Poster", algorithm: "Crosshatch", palette: "Teal & Orange", desc: "Hand-inked crosshatching in a cinematic teal-and-orange grade." },
+  { name: "Old Terminal", algorithm: "Bayer 8x8", palette: "Green Terminal", desc: "Phosphor-green scanlines like a 1980s command line." },
+  { name: "Sunset Comic", algorithm: "Stipple", palette: "Sunset Red", desc: "Pointillist stippling washed in warm sunset red." },
+  { name: "Electric Pop Art", algorithm: "Newspaper", palette: "Electric Blue", desc: "Ben-Day dots blown out in electric pop-art blue." },
+  { name: "Sepia Memories", algorithm: "Jarvis-Judice-Ninke", palette: "Sepia", desc: "Soft, high-quality error diffusion in faded sepia tones." },
+  { name: "Forest Lines", algorithm: "Horizontal Lines", palette: "Forest Green", desc: "Engraved horizontal linework in deep forest green." },
+  { name: "Purple Matrix", algorithm: "Grid Pattern", palette: "Lime & Purple", desc: "A glitchy lime-on-purple grid, straight out of The Matrix." },
+  { name: "Blue Noise Pro", algorithm: "Blue Noise", palette: "Black & White", desc: "The gold standard of dithering — smooth, artifact-free black & white." },
+  { name: "Print Halftone", algorithm: "Clustered Dot", palette: "Cyan & Magenta", desc: "Genuine offset-press halftone in cyan and magenta." },
+  { name: "Static TV", algorithm: "White Noise", palette: "Black & White", desc: "Pure television static, frozen mid-frame." },
+  { name: "Organic Curves", algorithm: "Riemersma", palette: "Burgundy & Cream", desc: "Space-filling curves for a hand-drawn, organic texture." },
+  { name: "Adaptive Dream", algorithm: "Variable Error", palette: "Lavender & Sage", desc: "Adaptive error diffusion in a soft lavender-sage palette." },
 ];
 
 export default function Homepage() {
@@ -127,17 +135,34 @@ export default function Homepage() {
       {/* Presets */}
       <section id="presets" className="border-t border-white/10 py-20 md:py-24">
         <div className="mx-auto max-w-6xl px-6 md:px-8">
-          <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-            <h2 className="font-subheader text-white" style={{ fontWeight: 700, fontSize: "clamp(1.5rem, 3.5vw, 2rem)" }}>
-              Curated presets, ready to try.
-            </h2>
+          <div className="mb-4 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <div className="dd-label mb-3">{`// ${presets.length} Presets`}</div>
+              <h2 className="font-subheader text-white" style={{ fontWeight: 700, fontSize: "clamp(1.5rem, 3.5vw, 2rem)" }}>
+                Curated presets, ready to try.
+              </h2>
+            </div>
             <Link href="/workspace" className="dd-label transition-colors hover:text-white">
               Open Workspace &rarr;
             </Link>
           </div>
-          <p className="text-sm leading-loose text-white/40 md:text-base">
-            {presets.join("  ·  ")}
+          <p className="mb-12 max-w-2xl text-sm leading-relaxed text-white/50 md:text-base">
+            Every preset dials in a specific algorithm, color palette, and
+            contrast curve — hand-tuned so you can go from source file to
+            finished look in one click, then tweak from there.
           </p>
+          <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+            {presets.map((p) => (
+              <div key={p.name} className="bg-[var(--background)] p-6">
+                <h3 className="font-subheader mb-2 text-sm font-semibold text-white">{p.name}</h3>
+                <p className="mb-4 text-sm leading-relaxed text-white/50">{p.desc}</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="dd-chip-outline text-[10px]">{p.algorithm}</span>
+                  <span className="dd-chip-outline text-[10px]">{p.palette}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
