@@ -66,7 +66,7 @@ export default function Homepage() {
 
           <div className="relative mx-auto w-full max-w-sm md:max-w-none">
             <CornerMarks />
-            <div className="overflow-hidden rounded-2xl border border-white/10">
+            <div className="overflow-hidden rounded-2xl">
               <div className="relative aspect-square w-full">
                 <video
                   src="/videos/dither-dog-hero.webm"
