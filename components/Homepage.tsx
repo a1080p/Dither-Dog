@@ -212,6 +212,9 @@ export default function Homepage() {
             DITHER DOG
           </span>
           <div className="dd-label flex items-center gap-6">
+            <Link href="/guides" className="hover:text-white/80">
+              Guides
+            </Link>
             <a
               href="https://github.com/a1080p/Dither-Dog"
               target="_blank"

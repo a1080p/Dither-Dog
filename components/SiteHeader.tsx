@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/", label: "Home" },
   { href: "/workspace", label: "Workspace" },
+  { href: "/guides", label: "Guides" },
   { href: "/about", label: "About" },
 ];
 
@@ -36,7 +37,8 @@ export function SiteHeader() {
             page, regardless of whether the right-hand CTA is rendered. */}
         <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-none border border-white/12 px-1 py-1 md:flex">
           {links.map((link) => {
-            const active = pathname === link.href;
+            const active =
+              link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
