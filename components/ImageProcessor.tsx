@@ -13,22 +13,6 @@ type Preset = {
 
 const presets: Preset[] = [
   {
-    name: 'Colina Dreams',
-    params: {
-      effect: 'dithering',
-      ditheringAlgorithm: 'halftone-dots',
-      colorPalette: 'colina-dreams',
-      ditherContrast: 140,
-      effectScale: 1.6,
-      effectSize: 7,
-      brightness: 10,
-      contrast: 25,
-      blur: 0,
-      depth: 45,
-      invert: false,
-    }
-  },
-  {
     name: 'Acid Wash',
     params: {
       effect: 'dithering',
@@ -547,10 +531,10 @@ export default function ImageProcessor() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for desktop
   const [isMobile, setIsMobile] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    load: true,
-    effect: true,
+    load: false,
+    effect: false,
     adjustments: false,
-    export: true,
+    export: false,
   });
   const toggleSection = (id: string) => setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
 

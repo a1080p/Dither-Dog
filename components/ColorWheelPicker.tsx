@@ -28,7 +28,10 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
   return { h: Number.isNaN(h) ? 0 : h, s: s * 100, l: l * 100 };
 }
 
-function hslToHex(h: number, s: number, l: number): string {
+// Returns 0-255 integer RGB — the single source of truth used both to paint
+// the wheel's pixels and to compute the output hex, so the dot always sits
+// on exactly the color it selects.
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const sNorm = s / 100;
   const lNorm = l / 100;
   const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
@@ -43,11 +46,24 @@ function hslToHex(h: number, s: number, l: number): string {
   else if (h < 300) { r = x; g = 0; b = c; }
   else { r = c; g = 0; b = x; }
 
-  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return [
+    Math.round((r + m) * 255),
+    Math.round((g + m) * 255),
+    Math.round((b + m) * 255),
+  ];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const toHex = (v: number) => v.toString(16).padStart(2, '0');
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
+function hslToHex(h: number, s: number, l: number): string {
+  return rgbToHex(...hslToRgb(h, s, l));
+}
+
 const WHEEL_SIZE = 130;
+const WHEEL_RADIUS = WHEEL_SIZE / 2;
 
 export default function ColorWheelPicker({
   label,
@@ -59,6 +75,7 @@ export default function ColorWheelPicker({
   onChange: (hex: string) => void;
 }) {
   const wheelRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hsl, setHsl] = useState(() => hexToHsl(value));
   const [isDragging, setIsDragging] = useState(false);
   const [hexInput, setHexInput] = useState(value);
@@ -70,6 +87,47 @@ export default function ColorWheelPicker({
       setHexInput(value);
     }
   }, [value, isDragging]);
+
+  // Paint the wheel pixel-by-pixel using the exact same hslToRgb math used
+  // to compute the selected color, so the dot always sits on the color it
+  // actually picks — no CSS gradient approximation to drift out of sync.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const size = canvas.width;
+    const radius = size / 2;
+    const imageData = ctx.createImageData(size, size);
+    const data = imageData.data;
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const dx = x - radius;
+        const dy = y - radius;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const idx = (y * size + x) * 4;
+
+        if (dist > radius) {
+          data[idx + 3] = 0;
+          continue;
+        }
+
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        if (angle < 0) angle += 360;
+        const saturation = Math.min(1, dist / radius) * 100;
+
+        const [r, g, b] = hslToRgb(angle, saturation, hsl.l);
+        data[idx] = r;
+        data[idx + 1] = g;
+        data[idx + 2] = b;
+        data[idx + 3] = 255;
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }, [hsl.l]);
 
   const updateFromPointer = useCallback((clientX: number, clientY: number, lightness: number) => {
     const wheel = wheelRef.current;
@@ -143,8 +201,8 @@ export default function ColorWheelPicker({
   // Pointer dot position on the wheel
   const radiusFrac = hsl.s / 100;
   const angleRad = (hsl.h * Math.PI) / 180;
-  const dotX = WHEEL_SIZE / 2 + Math.cos(angleRad) * radiusFrac * (WHEEL_SIZE / 2);
-  const dotY = WHEEL_SIZE / 2 + Math.sin(angleRad) * radiusFrac * (WHEEL_SIZE / 2);
+  const dotX = WHEEL_RADIUS + Math.cos(angleRad) * radiusFrac * WHEEL_RADIUS;
+  const dotY = WHEEL_RADIUS + Math.sin(angleRad) * radiusFrac * WHEEL_RADIUS;
 
   const currentHex = hslToHex(hsl.h, hsl.s, hsl.l);
 
@@ -163,13 +221,15 @@ export default function ColorWheelPicker({
           position: 'relative',
           cursor: 'crosshair',
           touchAction: 'none',
-          background: `radial-gradient(circle, hsl(0,0%,${hsl.l}%) 0%, transparent 72%),
-            conic-gradient(from 0deg,
-              hsl(0,100%,${hsl.l}%), hsl(60,100%,${hsl.l}%), hsl(120,100%,${hsl.l}%),
-              hsl(180,100%,${hsl.l}%), hsl(240,100%,${hsl.l}%), hsl(300,100%,${hsl.l}%), hsl(360,100%,${hsl.l}%))`,
           boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.15)',
         }}
       >
+        <canvas
+          ref={canvasRef}
+          width={WHEEL_SIZE}
+          height={WHEEL_SIZE}
+          style={{ width: '100%', height: '100%', borderRadius: '50%', display: 'block', pointerEvents: 'none' }}
+        />
         <div
           style={{
             position: 'absolute',

@@ -1433,6 +1433,92 @@ function applyColorPalette(
 }
 
 /**
+ * Runs the selected dithering algorithm once, exactly as before — every
+ * algorithm reads grayscale luminance and writes the same value back to
+ * R, G and B, so this always yields a black & white (two-tone-ready) result.
+ */
+function runDitheringAlgorithm(
+  imageData: ImageData,
+  algorithm: DitheringAlgorithm,
+  ditherIntensity: number,
+  effectScale: number,
+  effectSize: number
+): ImageData {
+  switch (algorithm) {
+    case 'floyd-steinberg': return applyFloydSteinberg(imageData, ditherIntensity, effectScale, effectSize);
+    case 'atkinson': return applyAtkinson(imageData, ditherIntensity, effectScale, effectSize);
+    case 'jarvis-judice-ninke': return applyJarvisJudiceNinke(imageData, ditherIntensity, effectScale, effectSize);
+    case 'stucki': return applyStucki(imageData, ditherIntensity, effectScale, effectSize);
+    case 'burkes': return applyBurkes(imageData, ditherIntensity, effectScale, effectSize);
+    case 'sierra': return applySierra(imageData, ditherIntensity, effectScale, effectSize);
+    case 'sierra-lite': return applySierraLite(imageData, ditherIntensity, effectScale, effectSize);
+    case 'two-row-sierra': return applyTwoRowSierra(imageData, ditherIntensity, effectScale, effectSize);
+    case 'bayer-2x2': return applyBayer2x2(imageData, effectScale, effectSize);
+    case 'bayer-4x4': return applyBayer4x4(imageData, effectScale, effectSize);
+    case 'bayer-8x8': return applyBayer8x8(imageData, effectScale, effectSize);
+    case 'random': return applyRandomDither(imageData, ditherIntensity, effectScale, effectSize);
+    case 'ordered': return applyBayer4x4(imageData, effectScale, effectSize);
+    case 'crosshatch': return applyCrosshatch(imageData, effectScale, effectSize);
+    case 'halftone-dots': return applyHalftoneDots(imageData, effectScale, effectSize);
+    case 'newspaper': return applyNewspaper(imageData, effectScale, effectSize);
+    case 'stipple': return applyStipple(imageData, effectScale, effectSize);
+    case 'horizontal-lines': return applyHorizontalLines(imageData, effectScale, effectSize);
+    case 'vertical-lines': return applyVerticalLines(imageData, effectScale, effectSize);
+    case 'diagonal-lines': return applyDiagonalLines(imageData, effectScale, effectSize);
+    case 'grid-pattern': return applyGridPattern(imageData, effectScale, effectSize);
+    case 'spiral': return applySpiral(imageData, effectScale, effectSize);
+    case 'noise-texture': return applyNoiseTexture(imageData, effectScale, effectSize);
+    case 'blue-noise': return applyBlueNoise(imageData, effectScale, effectSize);
+    case 'clustered-dot': return applyClusteredDot(imageData, effectScale, effectSize);
+    case 'white-noise': return applyWhiteNoise(imageData, effectScale, effectSize);
+    case 'riemersma': return applyRiemersma(imageData, ditherIntensity, effectScale, effectSize);
+    case 'variable-error': return applyVariableError(imageData, ditherIntensity, effectScale, effectSize);
+    default: return imageData;
+  }
+}
+
+/**
+ * Full Color mode: runs the chosen dithering algorithm independently on
+ * each of the R, G, B channels (each fed in as a grayscale-equivalent
+ * image), then recombines the three results — preserving the original
+ * color instead of collapsing to black & white.
+ */
+function applyDitheringFullColor(
+  imageData: ImageData,
+  algorithm: DitheringAlgorithm,
+  ditherIntensity: number,
+  effectScale: number,
+  effectSize: number
+): ImageData {
+  const { width, height, data: src } = imageData;
+
+  const channelImage = (offset: 0 | 1 | 2): ImageData => {
+    const chData = new Uint8ClampedArray(src.length);
+    for (let i = 0; i < src.length; i += 4) {
+      const v = src[i + offset];
+      chData[i] = v;
+      chData[i + 1] = v;
+      chData[i + 2] = v;
+      chData[i + 3] = src[i + 3];
+    }
+    return new ImageData(chData, width, height);
+  };
+
+  const rOut = runDitheringAlgorithm(channelImage(0), algorithm, ditherIntensity, effectScale, effectSize);
+  const gOut = runDitheringAlgorithm(channelImage(1), algorithm, ditherIntensity, effectScale, effectSize);
+  const bOut = runDitheringAlgorithm(channelImage(2), algorithm, ditherIntensity, effectScale, effectSize);
+
+  const merged = new Uint8ClampedArray(src.length);
+  for (let i = 0; i < src.length; i += 4) {
+    merged[i] = rOut.data[i];
+    merged[i + 1] = gOut.data[i + 1];
+    merged[i + 2] = bOut.data[i + 2];
+    merged[i + 3] = src[i + 3];
+  }
+  return new ImageData(merged, width, height);
+}
+
+/**
  * Main processing pipeline
  */
 export function processImage(
@@ -1483,91 +1569,25 @@ export function processImage(
   // Apply main effect
   switch (params.effect) {
     case 'dithering':
-      switch (params.ditheringAlgorithm) {
-        case 'floyd-steinberg':
-          processed = applyFloydSteinberg(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'atkinson':
-          processed = applyAtkinson(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'jarvis-judice-ninke':
-          processed = applyJarvisJudiceNinke(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'stucki':
-          processed = applyStucki(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'burkes':
-          processed = applyBurkes(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'sierra':
-          processed = applySierra(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'sierra-lite':
-          processed = applySierraLite(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'two-row-sierra':
-          processed = applyTwoRowSierra(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'bayer-2x2':
-          processed = applyBayer2x2(processed, params.effectScale, params.effectSize);
-          break;
-        case 'bayer-4x4':
-          processed = applyBayer4x4(processed, params.effectScale, params.effectSize);
-          break;
-        case 'bayer-8x8':
-          processed = applyBayer8x8(processed, params.effectScale, params.effectSize);
-          break;
-        case 'random':
-          processed = applyRandomDither(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'ordered':
-          processed = applyBayer4x4(processed, params.effectScale, params.effectSize);
-          break;
-        case 'crosshatch':
-          processed = applyCrosshatch(processed, params.effectScale, params.effectSize);
-          break;
-        case 'halftone-dots':
-          processed = applyHalftoneDots(processed, params.effectScale, params.effectSize);
-          break;
-        case 'newspaper':
-          processed = applyNewspaper(processed, params.effectScale, params.effectSize);
-          break;
-        case 'stipple':
-          processed = applyStipple(processed, params.effectScale, params.effectSize);
-          break;
-        case 'horizontal-lines':
-          processed = applyHorizontalLines(processed, params.effectScale, params.effectSize);
-          break;
-        case 'vertical-lines':
-          processed = applyVerticalLines(processed, params.effectScale, params.effectSize);
-          break;
-        case 'diagonal-lines':
-          processed = applyDiagonalLines(processed, params.effectScale, params.effectSize);
-          break;
-        case 'grid-pattern':
-          processed = applyGridPattern(processed, params.effectScale, params.effectSize);
-          break;
-        case 'spiral':
-          processed = applySpiral(processed, params.effectScale, params.effectSize);
-          break;
-        case 'noise-texture':
-          processed = applyNoiseTexture(processed, params.effectScale, params.effectSize);
-          break;
-        case 'blue-noise':
-          processed = applyBlueNoise(processed, params.effectScale, params.effectSize);
-          break;
-        case 'clustered-dot':
-          processed = applyClusteredDot(processed, params.effectScale, params.effectSize);
-          break;
-        case 'white-noise':
-          processed = applyWhiteNoise(processed, params.effectScale, params.effectSize);
-          break;
-        case 'riemersma':
-          processed = applyRiemersma(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
-        case 'variable-error':
-          processed = applyVariableError(processed, params.ditherIntensity, params.effectScale, params.effectSize);
-          break;
+      if (params.colorPalette === 'full-color') {
+        // Every dithering algorithm collapses R/G/B into one shared value,
+        // so a straight run always yields black & white. Running the same
+        // algorithm independently per channel keeps the original color.
+        processed = applyDitheringFullColor(
+          processed,
+          params.ditheringAlgorithm,
+          params.ditherIntensity,
+          params.effectScale,
+          params.effectSize
+        );
+      } else {
+        processed = runDitheringAlgorithm(
+          processed,
+          params.ditheringAlgorithm,
+          params.ditherIntensity,
+          params.effectScale,
+          params.effectSize
+        );
       }
 
       // Apply invert last for dithering
