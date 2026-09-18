@@ -34,8 +34,16 @@ export type DitheringAlgorithm =
   | 'variable-error';
 
 export type ColorPalette =
+  // Custom
+  | 'custom'
   // Full Color
   | 'full-color'
+  // Vibrant
+  | 'colina-dreams'
+  | 'acid-lemon-violet'
+  | 'electric-orange-cyan'
+  | 'laser-red-blue'
+  | 'toxic-magenta-teal'
   // Basic
   | 'black-white'
   | 'red-black'
@@ -82,6 +90,8 @@ export interface ProcessingParams {
   effectScale: number;
   effectSize: number;
   colorPalette: ColorPalette;
+  customPrimaryColor: string;
+  customSecondaryColor: string;
 }
 
 // Bayer matrices for ordered dithering
@@ -1344,7 +1354,24 @@ export function adjustContrast(imageData: ImageData, contrast: number): ImageDat
 /**
  * Apply color palette
  */
-function applyColorPalette(imageData: ImageData, palette: ColorPalette): ImageData {
+function hexToRgb(hex: string): [number, number, number] {
+  const cleaned = hex.replace('#', '');
+  const r = parseInt(cleaned.substring(0, 2), 16);
+  const g = parseInt(cleaned.substring(2, 4), 16);
+  const b = parseInt(cleaned.substring(4, 6), 16);
+  return [
+    Number.isNaN(r) ? 0 : r,
+    Number.isNaN(g) ? 0 : g,
+    Number.isNaN(b) ? 0 : b,
+  ];
+}
+
+function applyColorPalette(
+  imageData: ImageData,
+  palette: ColorPalette,
+  customPrimaryColor: string = '#ff1464',
+  customSecondaryColor: string = '#c8ff3c'
+): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
 
   // If full-color mode, return image unchanged
@@ -1352,7 +1379,13 @@ function applyColorPalette(imageData: ImageData, palette: ColorPalette): ImageDa
     return new ImageData(data, imageData.width, imageData.height);
   }
 
-  const palettes: Record<Exclude<ColorPalette, 'full-color'>, { dark: [number, number, number], light: [number, number, number] }> = {
+  const palettes: Record<Exclude<ColorPalette, 'full-color' | 'custom'>, { dark: [number, number, number], light: [number, number, number] }> = {
+    // Vibrant
+    'colina-dreams': { dark: [255, 20, 99], light: [206, 255, 60] },
+    'acid-lemon-violet': { dark: [120, 0, 255], light: [255, 255, 40] },
+    'electric-orange-cyan': { dark: [0, 255, 220], light: [255, 110, 0] },
+    'laser-red-blue': { dark: [0, 60, 255], light: [255, 20, 20] },
+    'toxic-magenta-teal': { dark: [0, 200, 180], light: [255, 0, 180] },
     // Basic
     'black-white': { dark: [0, 0, 0], light: [255, 255, 255] },
     'red-black': { dark: [0, 0, 0], light: [255, 0, 0] },
@@ -1382,7 +1415,9 @@ function applyColorPalette(imageData: ImageData, palette: ColorPalette): ImageDa
     'lavender-sage': { dark: [85, 107, 47], light: [230, 230, 250] }
   };
 
-  const colors = palettes[palette as Exclude<ColorPalette, 'full-color'>];
+  const colors = palette === 'custom'
+    ? { dark: hexToRgb(customPrimaryColor), light: hexToRgb(customSecondaryColor) }
+    : palettes[palette as Exclude<ColorPalette, 'full-color' | 'custom'>];
 
   for (let i = 0; i < data.length; i += 4) {
     const gray = toGrayscale(data[i], data[i + 1], data[i + 2]);
@@ -1552,7 +1587,7 @@ export function processImage(
   }
 
   // Apply color palette last
-  processed = applyColorPalette(processed, params.colorPalette);
+  processed = applyColorPalette(processed, params.colorPalette, params.customPrimaryColor, params.customSecondaryColor);
 
   return processed;
 }

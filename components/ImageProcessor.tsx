@@ -4,6 +4,7 @@ import { useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } fr
 import NextImage from 'next/image';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import { processImage, type ProcessingParams, type DitheringAlgorithm, type ColorPalette } from '@/lib/imageProcessing';
+import ColorWheelPicker from '@/components/ColorWheelPicker';
 
 type Preset = {
   name: string;
@@ -11,6 +12,86 @@ type Preset = {
 };
 
 const presets: Preset[] = [
+  {
+    name: 'Colina Dreams',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'halftone-dots',
+      colorPalette: 'colina-dreams',
+      ditherContrast: 140,
+      effectScale: 1.6,
+      effectSize: 7,
+      brightness: 10,
+      contrast: 25,
+      blur: 0,
+      depth: 45,
+      invert: false,
+    }
+  },
+  {
+    name: 'Acid Wash',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'clustered-dot',
+      colorPalette: 'acid-lemon-violet',
+      ditherContrast: 150,
+      effectScale: 1.5,
+      effectSize: 6,
+      brightness: 10,
+      contrast: 30,
+      blur: 0,
+      depth: 42,
+      invert: false,
+    }
+  },
+  {
+    name: 'Circuit Pop',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'bayer-8x8',
+      colorPalette: 'electric-orange-cyan',
+      ditherContrast: 130,
+      effectScale: 1.3,
+      effectSize: 3,
+      brightness: 10,
+      contrast: 25,
+      blur: 0,
+      depth: 40,
+      invert: false,
+    }
+  },
+  {
+    name: 'Laser Grid',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'grid-pattern',
+      colorPalette: 'laser-red-blue',
+      ditherContrast: 155,
+      effectScale: 1.8,
+      effectSize: 9,
+      brightness: 10,
+      contrast: 30,
+      blur: 0,
+      depth: 48,
+      invert: false,
+    }
+  },
+  {
+    name: 'Toxic Stipple',
+    params: {
+      effect: 'dithering',
+      ditheringAlgorithm: 'stipple',
+      colorPalette: 'toxic-magenta-teal',
+      ditherContrast: 145,
+      effectScale: 1.6,
+      effectSize: 11,
+      brightness: 10,
+      contrast: 28,
+      blur: 0,
+      depth: 44,
+      invert: false,
+    }
+  },
   {
     name: 'Classic Newspaper',
     params: {
@@ -452,6 +533,8 @@ export default function ImageProcessor() {
     effectScale: 1,
     effectSize: 8,
     colorPalette: 'full-color',
+    customPrimaryColor: '#ff1464',
+    customSecondaryColor: '#c8ff3c',
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -463,6 +546,13 @@ export default function ImageProcessor() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for desktop
   const [isMobile, setIsMobile] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    load: true,
+    effect: true,
+    adjustments: false,
+    export: true,
+  });
+  const toggleSection = (id: string) => setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const availableVideoFormats = useMemo(() => {
     return (Object.keys(VIDEO_FORMAT_CANDIDATES) as Array<'webm' | 'mp4'>).filter(
@@ -1241,6 +1331,32 @@ export default function ImageProcessor() {
     );
   };
 
+  // Collapsible section wrapper used to consolidate the sidebar into groups
+  const AccordionSection = ({
+    id,
+    title,
+    children,
+  }: {
+    id: string;
+    title: string;
+    children: React.ReactNode;
+  }) => {
+    const isOpen = openSections[id] ?? true;
+    return (
+      <div style={{ marginBottom: '0.5rem' }}>
+        <button
+          onClick={() => toggleSection(id)}
+          className="w-full flex items-center justify-between glass-panel text-white text-xs font-bold rounded-none cursor-pointer hover:bg-white/[0.04] transition-colors"
+          style={{ margin: '0 2rem', padding: '0.625rem 1rem', width: 'calc(100% - 4rem)' }}
+        >
+          <span className="tracking-wide uppercase">{title}</span>
+          <span style={{ fontSize: '1rem', lineHeight: 1 }}>{isOpen ? '−' : '+'}</span>
+        </button>
+        {isOpen && <div style={{ marginTop: '0.75rem' }}>{children}</div>}
+      </div>
+    );
+  };
+
   return (
     <div className="flex md:flex-row flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] bg-gradient-dark overflow-hidden md:overflow-auto relative">
       {/* Mobile Menu Toggle Button - Arrow on right edge of sidebar - Only visible on mobile */}
@@ -1289,347 +1405,383 @@ export default function ImageProcessor() {
             id="file-input"
           />
 
-          {/* Load Media Button */}
-          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
-            <label
-              htmlFor="file-input"
-              className="block w-full px-4 py-5 glass-button-primary text-white text-base font-bold rounded-none cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
-            >
-              {hasMedia ? 'Change Media' : 'Load Image, GIF, or Video'}
-            </label>
-          </div>
+          <AccordionSection id="load" title="Load & Presets">
+            {/* Load Media Button */}
+            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+              <label
+                htmlFor="file-input"
+                className="block w-full px-4 py-5 glass-button-primary text-white text-base font-bold rounded-none cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
+              >
+                {hasMedia ? 'Change Media' : 'Load Image, GIF, or Video'}
+              </label>
+            </div>
 
-          {/* Dithering Presets */}
-          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
-            <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
-              Dithering Presets
-            </label>
-            <select
-              value={selectedPreset}
-              onChange={(e) => {
-                if (e.target.value && e.target.value !== 'Custom') {
-                  applyPreset(e.target.value);
-                }
-              }}
-              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
-            >
-              <option value="">Select A Preset...</option>
-              {selectedPreset === 'Custom' && <option value="Custom">Custom</option>}
-              {presets.map((preset) => (
-                <option key={preset.name} value={preset.name}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Effect Type */}
-          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
-            <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
-              Effect type
-            </label>
-            <select
-              value={params.effect}
-              onChange={(e) => updateParam('effect', e.target.value as ProcessingParams['effect'])}
-              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
-            >
-              <option value="none">None</option>
-              <option value="dithering">Dithering</option>
-              <option value="threshold">Threshold</option>
-              <option value="edge-detect">Edge Detection</option>
-            </select>
-          </div>
-
-          {/* Invert Button */}
-          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
-            <button
-              onClick={() => updateParam('invert', !params.invert)}
-              className={`w-full px-4 py-3 text-sm font-bold rounded-none transition-all duration-300 cursor-pointer active:scale-[0.97] ${
-                params.invert
-                  ? 'glass-button-primary text-white'
-                  : 'glass-panel text-white/60 border border-white/10 hover:text-white hover:border-white/25 hover:bg-white/[0.04]'
-              }`}
-            >
-              {params.invert ? 'Invert: On' : 'Invert: Off'}
-            </button>
-          </div>
-
-          {/* Color Palette */}
-          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
-            <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
-              Color palette
-            </label>
-                  <select
-                    value={params.colorPalette}
-                    onChange={(e) => updateParam('colorPalette', e.target.value as ColorPalette)}
-                    className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
-                  >
-                    <option value="full-color">Full Color</option>
-                    <optgroup label="Basic">
-                      <option value="black-white">Black & White</option>
-                      <option value="red-black">Red & Black</option>
-                      <option value="blue-white">Blue & White</option>
-                      <option value="green-black">Green & Black</option>
-                    </optgroup>
-                    <optgroup label="Retro">
-                      <option value="sepia">Sepia</option>
-                      <option value="gameboy">Game Boy</option>
-                      <option value="commodore64">Commodore 64</option>
-                      <option value="amber-crt">Amber CRT</option>
-                      <option value="green-terminal">Green Terminal</option>
-                    </optgroup>
-                    <optgroup label="Neon">
-                      <option value="cyan-magenta">Cyan & Magenta</option>
-                      <option value="neon-pink">Neon Pink</option>
-                      <option value="electric-blue">Electric Blue</option>
-                      <option value="lime-purple">Lime & Purple</option>
-                      <option value="hot-pink-cyan">Hot Pink & Cyan</option>
-                    </optgroup>
-                    <optgroup label="Vintage">
-                      <option value="orange-blue">Orange & Blue</option>
-                      <option value="purple-yellow">Purple & Yellow</option>
-                      <option value="teal-orange">Teal & Orange</option>
-                      <option value="burgundy-cream">Burgundy & Cream</option>
-                    </optgroup>
-                    <optgroup label="Nature">
-                      <option value="forest-green">Forest Green</option>
-                      <option value="ocean-blue">Ocean Blue</option>
-                      <option value="sunset-red">Sunset Red</option>
-                      <option value="lavender-sage">Lavender & Sage</option>
-                    </optgroup>
-            </select>
-          </div>
-
-          {/* Dithering Algorithm */}
-          {params.effect === 'dithering' && (
+            {/* Dithering Presets */}
             <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
               <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
-                Dithering algorithm
+                Dithering Presets
               </label>
-                      <select
-                        value={params.ditheringAlgorithm}
-                        onChange={(e) => updateParam('ditheringAlgorithm', e.target.value as DitheringAlgorithm)}
-                        className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
-                      >
-                        <optgroup label="Error Diffusion">
-                          <option value="floyd-steinberg">Floyd-Steinberg</option>
-                          <option value="atkinson">Atkinson</option>
-                          <option value="jarvis-judice-ninke">Jarvis-Judice-Ninke</option>
-                          <option value="stucki">Stucki</option>
-                          <option value="burkes">Burkes</option>
-                          <option value="sierra">Sierra</option>
-                          <option value="sierra-lite">Sierra-Lite</option>
-                          <option value="two-row-sierra">Two-Row Sierra</option>
-                          <option value="variable-error">Variable Error (Adaptive)</option>
-                        </optgroup>
-                        <optgroup label="Ordered Dither">
-                          <option value="bayer-2x2">Bayer 2x2</option>
-                          <option value="bayer-4x4">Bayer 4x4</option>
-                          <option value="bayer-8x8">Bayer 8x8</option>
-                          <option value="ordered">Ordered</option>
-                          <option value="blue-noise">Blue Noise (High Quality)</option>
-                          <option value="clustered-dot">Clustered Dot (Halftone)</option>
-                        </optgroup>
-                        <optgroup label="Artistic Patterns">
-                          <option value="crosshatch">Crosshatch</option>
-                          <option value="halftone-dots">Halftone Dots</option>
-                          <option value="newspaper">Newspaper Print</option>
-                          <option value="stipple">Stipple/Pointillism</option>
-                          <option value="grid-pattern">Grid Pattern</option>
-                          <option value="spiral">Spiral</option>
-                        </optgroup>
-                        <optgroup label="Line Patterns">
-                          <option value="horizontal-lines">Horizontal Lines</option>
-                          <option value="vertical-lines">Vertical Lines</option>
-                          <option value="diagonal-lines">Diagonal Lines</option>
-                        </optgroup>
-                        <optgroup label="Noise & Random">
-                          <option value="random">Random</option>
-                          <option value="white-noise">White Noise</option>
-                          <option value="noise-texture">Noise Texture</option>
-                        </optgroup>
-                        <optgroup label="Special Algorithms">
-                          <option value="riemersma">Riemersma (Space-Filling)</option>
-                        </optgroup>
-                      </select>
+              <select
+                value={selectedPreset}
+                onChange={(e) => {
+                  if (e.target.value && e.target.value !== 'Custom') {
+                    applyPreset(e.target.value);
+                  }
+                }}
+                className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
+              >
+                <option value="">Select A Preset...</option>
+                {selectedPreset === 'Custom' && <option value="Custom">Custom</option>}
+                {presets.map((preset) => (
+                  <option key={preset.name} value={preset.name}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+          </AccordionSection>
 
-          <SliderControl
-                  label="Brightness"
-                  value={params.brightness}
-                  onChange={(v) => updateParam('brightness', v)}
-                  min={-50}
-                  max={50}
+          <AccordionSection id="effect" title="Effect & Color">
+            {/* Effect Type */}
+            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+              <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                Effect type
+              </label>
+              <select
+                value={params.effect}
+                onChange={(e) => updateParam('effect', e.target.value as ProcessingParams['effect'])}
+                className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
+              >
+                <option value="none">None</option>
+                <option value="dithering">Dithering</option>
+                <option value="threshold">Threshold</option>
+                <option value="edge-detect">Edge Detection</option>
+              </select>
+            </div>
+
+            {/* Invert Button */}
+            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+              <button
+                onClick={() => updateParam('invert', !params.invert)}
+                className={`w-full px-4 py-3 text-sm font-bold rounded-none transition-all duration-300 cursor-pointer active:scale-[0.97] ${
+                  params.invert
+                    ? 'glass-button-primary text-white'
+                    : 'glass-panel text-white/60 border border-white/10 hover:text-white hover:border-white/25 hover:bg-white/[0.04]'
+                }`}
+              >
+                {params.invert ? 'Invert: On' : 'Invert: Off'}
+              </button>
+            </div>
+
+            {/* Color Palette */}
+            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+              <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                Color palette
+              </label>
+                    <select
+                      value={params.colorPalette}
+                      onChange={(e) => updateParam('colorPalette', e.target.value as ColorPalette)}
+                      className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
+                    >
+                      <optgroup label="Custom">
+                        <option value="custom">Custom Colors</option>
+                      </optgroup>
+                      <option value="full-color">Full Color</option>
+                      <optgroup label="Vibrant">
+                        <option value="colina-dreams">Colina Dreams</option>
+                        <option value="acid-lemon-violet">Acid Lemon & Violet</option>
+                        <option value="electric-orange-cyan">Electric Orange & Cyan</option>
+                        <option value="laser-red-blue">Laser Red & Blue</option>
+                        <option value="toxic-magenta-teal">Toxic Magenta & Teal</option>
+                      </optgroup>
+                      <optgroup label="Basic">
+                        <option value="black-white">Black & White</option>
+                        <option value="red-black">Red & Black</option>
+                        <option value="blue-white">Blue & White</option>
+                        <option value="green-black">Green & Black</option>
+                      </optgroup>
+                      <optgroup label="Retro">
+                        <option value="sepia">Sepia</option>
+                        <option value="gameboy">Game Boy</option>
+                        <option value="commodore64">Commodore 64</option>
+                        <option value="amber-crt">Amber CRT</option>
+                        <option value="green-terminal">Green Terminal</option>
+                      </optgroup>
+                      <optgroup label="Neon">
+                        <option value="cyan-magenta">Cyan & Magenta</option>
+                        <option value="neon-pink">Neon Pink</option>
+                        <option value="electric-blue">Electric Blue</option>
+                        <option value="lime-purple">Lime & Purple</option>
+                        <option value="hot-pink-cyan">Hot Pink & Cyan</option>
+                      </optgroup>
+                      <optgroup label="Vintage">
+                        <option value="orange-blue">Orange & Blue</option>
+                        <option value="purple-yellow">Purple & Yellow</option>
+                        <option value="teal-orange">Teal & Orange</option>
+                        <option value="burgundy-cream">Burgundy & Cream</option>
+                      </optgroup>
+                      <optgroup label="Nature">
+                        <option value="forest-green">Forest Green</option>
+                        <option value="ocean-blue">Ocean Blue</option>
+                        <option value="sunset-red">Sunset Red</option>
+                        <option value="lavender-sage">Lavender & Sage</option>
+                      </optgroup>
+              </select>
+            </div>
+
+            {/* Custom Color Pickers */}
+            {params.colorPalette === 'custom' && (
+              <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                <div className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-around', gap: '0.75rem' }}>
+                  <ColorWheelPicker
+                    label="Primary"
+                    value={params.customPrimaryColor}
+                    onChange={(hex) => updateParam('customPrimaryColor', hex)}
+                  />
+                  <ColorWheelPicker
+                    label="Secondary"
+                    value={params.customSecondaryColor}
+                    onChange={(hex) => updateParam('customSecondaryColor', hex)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Dithering Algorithm */}
+            {params.effect === 'dithering' && (
+              <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                  Dithering algorithm
+                </label>
+                        <select
+                          value={params.ditheringAlgorithm}
+                          onChange={(e) => updateParam('ditheringAlgorithm', e.target.value as DitheringAlgorithm)}
+                          className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
+                        >
+                          <optgroup label="Error Diffusion">
+                            <option value="floyd-steinberg">Floyd-Steinberg</option>
+                            <option value="atkinson">Atkinson</option>
+                            <option value="jarvis-judice-ninke">Jarvis-Judice-Ninke</option>
+                            <option value="stucki">Stucki</option>
+                            <option value="burkes">Burkes</option>
+                            <option value="sierra">Sierra</option>
+                            <option value="sierra-lite">Sierra-Lite</option>
+                            <option value="two-row-sierra">Two-Row Sierra</option>
+                            <option value="variable-error">Variable Error (Adaptive)</option>
+                          </optgroup>
+                          <optgroup label="Ordered Dither">
+                            <option value="bayer-2x2">Bayer 2x2</option>
+                            <option value="bayer-4x4">Bayer 4x4</option>
+                            <option value="bayer-8x8">Bayer 8x8</option>
+                            <option value="ordered">Ordered</option>
+                            <option value="blue-noise">Blue Noise (High Quality)</option>
+                            <option value="clustered-dot">Clustered Dot (Halftone)</option>
+                          </optgroup>
+                          <optgroup label="Artistic Patterns">
+                            <option value="crosshatch">Crosshatch</option>
+                            <option value="halftone-dots">Halftone Dots</option>
+                            <option value="newspaper">Newspaper Print</option>
+                            <option value="stipple">Stipple/Pointillism</option>
+                            <option value="grid-pattern">Grid Pattern</option>
+                            <option value="spiral">Spiral</option>
+                          </optgroup>
+                          <optgroup label="Line Patterns">
+                            <option value="horizontal-lines">Horizontal Lines</option>
+                            <option value="vertical-lines">Vertical Lines</option>
+                            <option value="diagonal-lines">Diagonal Lines</option>
+                          </optgroup>
+                          <optgroup label="Noise & Random">
+                            <option value="random">Random</option>
+                            <option value="white-noise">White Noise</option>
+                            <option value="noise-texture">Noise Texture</option>
+                          </optgroup>
+                          <optgroup label="Special Algorithms">
+                            <option value="riemersma">Riemersma (Space-Filling)</option>
+                          </optgroup>
+                        </select>
+              </div>
+            )}
+          </AccordionSection>
+
+          <AccordionSection id="adjustments" title="Adjustments">
+            <SliderControl
+                    label="Brightness"
+                    value={params.brightness}
+                    onChange={(v) => updateParam('brightness', v)}
+                    min={-50}
+                    max={50}
+                    step={1}
+                  />
+
+            <SliderControl
+              label="Contrast"
+              value={params.contrast}
+              onChange={(v) => updateParam('contrast', v)}
+              min={-50}
+              max={50}
+              step={1}
+            />
+
+            {/* Threshold Section */}
+            {params.effect === 'threshold' && (
+              <>
+                <SliderControl
+                  label="Threshold"
+                  value={params.threshold}
+                  onChange={(v) => updateParam('threshold', v)}
+                  min={0}
+                  max={255}
+                  step={1}
+                />
+              </>
+            )}
+
+            {/* Dithering Controls Section */}
+            {params.effect === 'dithering' && (
+              <>
+                <SliderControl
+                  label="Effect scale"
+                  value={params.effectScale}
+                  onChange={(v) => updateParam('effectScale', v)}
+                  min={0.1}
+                  max={3}
+                  step={0.1}
+                />
+
+                <SliderControl
+                  label="Effect size"
+                  value={params.effectSize}
+                  onChange={(v) => updateParam('effectSize', v)}
+                  min={1}
+                  max={32}
                   step={1}
                 />
 
-          <SliderControl
-            label="Contrast"
-            value={params.contrast}
-            onChange={(v) => updateParam('contrast', v)}
-            min={-50}
-            max={50}
-            step={1}
-          />
+                <SliderControl
+                  label="Dither contrast"
+                  value={params.ditherContrast}
+                  onChange={(v) => updateParam('ditherContrast', v)}
+                  min={80}
+                  max={200}
+                  step={5}
+                />
 
-          {/* Threshold Section */}
-          {params.effect === 'threshold' && (
-            <>
-              <SliderControl
-                label="Threshold"
-                value={params.threshold}
-                onChange={(v) => updateParam('threshold', v)}
-                min={0}
-                max={255}
-                step={1}
-              />
-            </>
-          )}
+                <SliderControl
+                  label="Luminance threshold"
+                  value={params.luminanceThreshold}
+                  onChange={(v) => updateParam('luminanceThreshold', v)}
+                  min={64}
+                  max={192}
+                  step={1}
+                />
 
-          {/* Dithering Controls Section */}
-          {params.effect === 'dithering' && (
-            <>
-              <SliderControl
-                label="Effect scale"
-                value={params.effectScale}
-                onChange={(v) => updateParam('effectScale', v)}
-                min={0.5}
-                max={2}
-                step={0.1}
-              />
+                <SliderControl
+                  label="Blur"
+                  value={params.blur}
+                  onChange={(v) => updateParam('blur', v)}
+                  min={0}
+                  max={5}
+                  step={0.1}
+                />
 
-              <SliderControl
-                label="Effect size"
-                value={params.effectSize}
-                onChange={(v) => updateParam('effectSize', v)}
-                min={1}
-                max={16}
-                step={1}
-              />
-
-              <SliderControl
-                label="Dither contrast"
-                value={params.ditherContrast}
-                onChange={(v) => updateParam('ditherContrast', v)}
-                min={80}
-                max={200}
-                step={5}
-              />
-
-              <SliderControl
-                label="Luminance threshold"
-                value={params.luminanceThreshold}
-                onChange={(v) => updateParam('luminanceThreshold', v)}
-                min={64}
-                max={192}
-                step={1}
-              />
-
-              <SliderControl
-                label="Blur"
-                value={params.blur}
-                onChange={(v) => updateParam('blur', v)}
-                min={0}
-                max={5}
-                step={0.1}
-              />
-
-              <SliderControl
-                label="Depth"
-                value={params.depth}
-                onChange={(v) => updateParam('depth', v)}
-                min={10}
-                max={70}
-                step={1}
-              />
-            </>
-          )}
+                <SliderControl
+                  label="Depth"
+                  value={params.depth}
+                  onChange={(v) => updateParam('depth', v)}
+                  min={10}
+                  max={70}
+                  step={1}
+                />
+              </>
+            )}
+          </AccordionSection>
 
           {/* Export Panel */}
           {hasMedia && (
-            <div style={{ padding: '0 2rem', marginTop: '1rem' }}>
-              <div className="glass-panel py-6 px-7 space-y-4 rounded-none">
-                <div className="space-y-6">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-white/80 font-semibold">Width</span>
-                    <span className="font-mono font-bold text-white">{mediaDims?.width ?? 0}px</span>
+            <AccordionSection id="export" title="Export">
+              <div style={{ padding: '0 2rem', marginTop: '0' }}>
+                <div className="glass-panel py-6 px-7 space-y-4 rounded-none">
+                  <div className="space-y-6">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/80 font-semibold">Width</span>
+                      <span className="font-mono font-bold text-white">{mediaDims?.width ?? 0}px</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/80 font-semibold">Height</span>
+                      <span className="font-mono font-bold text-white">{mediaDims?.height ?? 0}px</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/80 font-semibold">Status</span>
+                      <span className="font-bold text-white">
+                        {isRenderingVideo
+                          ? `Rendering... ${Math.round(renderProgress)}%`
+                          : isProcessing
+                            ? 'Processing...'
+                            : 'Ready'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-white/80 font-semibold">Height</span>
-                    <span className="font-mono font-bold text-white">{mediaDims?.height ?? 0}px</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-white/80 font-semibold">Status</span>
-                    <span className="font-bold text-white">
-                      {isRenderingVideo
-                        ? `Rendering... ${Math.round(renderProgress)}%`
-                        : isProcessing
-                          ? 'Processing...'
-                          : 'Ready'}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-white/70">
-                    {mediaType === 'video' || mediaType === 'gif' ? 'Frame format' : 'Format'}
-                  </label>
-                  <select
-                    value={imageExportFormat}
-                    onChange={(e) => setImageExportFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
-                    className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded-none focus:outline-none"
-                  >
-                    <option value="png">PNG (.png)</option>
-                    <option value="jpeg">JPEG (.jpg)</option>
-                    <option value="webp">WebP (.webp)</option>
-                  </select>
-                </div>
-
-                {(mediaType === 'video' || mediaType === 'gif') && availableVideoFormats.length > 0 && (
                   <div>
-                    <label className="mb-1 block text-xs font-bold text-white/70">Video format</label>
+                    <label className="mb-1 block text-xs font-bold text-white/70">
+                      {mediaType === 'video' || mediaType === 'gif' ? 'Frame format' : 'Format'}
+                    </label>
                     <select
-                      value={videoExportFormat}
-                      onChange={(e) => setVideoExportFormat(e.target.value as 'webm' | 'mp4')}
+                      value={imageExportFormat}
+                      onChange={(e) => setImageExportFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
                       className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded-none focus:outline-none"
                     >
-                      {availableVideoFormats.map((format) => (
-                        <option key={format} value={format}>
-                          {VIDEO_FORMAT_CANDIDATES[format].label}
-                        </option>
-                      ))}
+                      <option value="png">PNG (.png)</option>
+                      <option value="jpeg">JPEG (.jpg)</option>
+                      <option value="webp">WebP (.webp)</option>
                     </select>
                   </div>
-                )}
 
-                {mediaType === 'video' || mediaType === 'gif' ? (
-                  <div className="space-y-3">
+                  {(mediaType === 'video' || mediaType === 'gif') && availableVideoFormats.length > 0 && (
+                    <div>
+                      <label className="mb-1 block text-xs font-bold text-white/70">Video format</label>
+                      <select
+                        value={videoExportFormat}
+                        onChange={(e) => setVideoExportFormat(e.target.value as 'webm' | 'mp4')}
+                        className="w-full px-3 py-2 text-xs glass-input text-white font-semibold rounded-none focus:outline-none"
+                      >
+                        {availableVideoFormats.map((format) => (
+                          <option key={format} value={format}>
+                            {VIDEO_FORMAT_CANDIDATES[format].label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {mediaType === 'video' || mediaType === 'gif' ? (
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleExport}
+                        disabled={isProcessing || isRenderingVideo}
+                        className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      >
+                        Save Frame
+                      </button>
+                      <button
+                        onClick={mediaType === 'video' ? handleRenderVideo : handleRenderGifVideo}
+                        disabled={isProcessing || isRenderingVideo}
+                        className="w-full px-6 py-3 glass-button text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      >
+                        {isRenderingVideo ? `Rendering ${Math.round(renderProgress)}%` : 'Render Video'}
+                      </button>
+                    </div>
+                  ) : (
                     <button
                       onClick={handleExport}
-                      disabled={isProcessing || isRenderingVideo}
+                      disabled={isProcessing}
                       className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                      Save Frame
+                      Export Image
                     </button>
-                    <button
-                      onClick={mediaType === 'video' ? handleRenderVideo : handleRenderGifVideo}
-                      disabled={isProcessing || isRenderingVideo}
-                      className="w-full px-6 py-3 glass-button text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                      {isRenderingVideo ? `Rendering ${Math.round(renderProgress)}%` : 'Render Video'}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleExport}
-                    disabled={isProcessing}
-                    className="w-full px-6 py-3 glass-button-primary text-white text-sm font-bold rounded-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                  >
-                    Export Image
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            </AccordionSection>
           )}
         </div>
       </aside>
