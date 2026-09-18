@@ -531,7 +531,6 @@ export default function ImageProcessor() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Open by default for desktop
   const [isMobile, setIsMobile] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    load: false,
     effect: false,
     adjustments: false,
     export: false,
@@ -1389,41 +1388,39 @@ export default function ImageProcessor() {
             id="file-input"
           />
 
-          <AccordionSection id="load" title="Load & Presets">
-            {/* Load Media Button */}
-            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
-              <label
-                htmlFor="file-input"
-                className="block w-full px-4 py-5 glass-button-primary text-white text-base font-bold rounded-none cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
-              >
-                {hasMedia ? 'Change Media' : 'Load Image, GIF, or Video'}
-              </label>
-            </div>
+          {/* Load Media Button */}
+          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+            <label
+              htmlFor="file-input"
+              className="block w-full px-4 py-5 glass-button-primary text-white text-base font-bold rounded-none cursor-pointer text-center shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 tracking-wide"
+            >
+              {hasMedia ? 'Change Media' : 'Load Image, GIF, or Video'}
+            </label>
+          </div>
 
-            {/* Dithering Presets */}
-            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
-              <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
-                Dithering Presets
-              </label>
-              <select
-                value={selectedPreset}
-                onChange={(e) => {
-                  if (e.target.value && e.target.value !== 'Custom') {
-                    applyPreset(e.target.value);
-                  }
-                }}
-                className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
-              >
-                <option value="">Select A Preset...</option>
-                {selectedPreset === 'Custom' && <option value="Custom">Custom</option>}
-                {presets.map((preset) => (
-                  <option key={preset.name} value={preset.name}>
-                    {preset.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </AccordionSection>
+          {/* Dithering Presets */}
+          <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+            <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+              Dithering Presets
+            </label>
+            <select
+              value={selectedPreset}
+              onChange={(e) => {
+                if (e.target.value && e.target.value !== 'Custom') {
+                  applyPreset(e.target.value);
+                }
+              }}
+              className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
+            >
+              <option value="">Select A Preset...</option>
+              {selectedPreset === 'Custom' && <option value="Custom">Custom</option>}
+              {presets.map((preset) => (
+                <option key={preset.name} value={preset.name}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <AccordionSection id="effect" title="Effect & Color">
             {/* Effect Type */}
