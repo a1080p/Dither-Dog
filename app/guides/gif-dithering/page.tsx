@@ -46,10 +46,10 @@ export default function GifDitheringGuide() {
         <GuideH2>Why GIFs need dithering more than other formats</GuideH2>
         <GuideP>
           Formats like PNG, WebP, and MP4 can represent millions of colors
-          natively, so banding is rarely an issue. GIF's 256-color ceiling
-          means it's almost always the format where dithering matters most —
-          it's the difference between a GIF that looks like a cheap
-          screenshot and one that looks intentional, whether that's a
+          natively, so banding is rarely an issue. GIF&apos;s 256-color ceiling
+          means it&apos;s almost always the format where dithering matters most —
+          it&apos;s the difference between a GIF that looks like a cheap
+          screenshot and one that looks intentional, whether that&apos;s a
           faithful color reproduction or a deliberately retro, grainy
           aesthetic.
         </GuideP>
@@ -73,7 +73,7 @@ export default function GifDitheringGuide() {
         <GuideH2>Dither a GIF in your browser</GuideH2>
         <GuideP>
           <Link href="/workspace" style={{ color: "var(--accent)", textDecoration: "underline" }}>Open the Dither Dog workspace</Link>{" "}
-          and drop in a GIF directly — it's processed frame by frame, fully
+          and drop in a GIF directly — it&apos;s processed frame by frame, fully
           client-side, so nothing is ever uploaded to a server. Pick from 28
           dithering algorithms (Floyd-Steinberg for smooth photographic
           results, Bayer/ordered patterns for a more uniform retro texture)

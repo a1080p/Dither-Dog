@@ -37,7 +37,7 @@ export default function FloydSteinbergGuide() {
           algorithm for reducing an image to a limited color palette — often
           just black and white — without losing the impression of smooth
           tone. Developed by Robert W. Floyd and Louis Steinberg in 1976,
-          it's the reason old black-and-white newspaper photos, early Mac
+          it&apos;s the reason old black-and-white newspaper photos, early Mac
           bitmap graphics, and modern pixel-art tools all share that
           distinctive scattered, grainy look instead of harsh color bands.
         </GuideP>
@@ -47,7 +47,7 @@ export default function FloydSteinbergGuide() {
           The algorithm scans an image pixel by pixel, left to right, top to
           bottom. For each pixel, it picks the closest available color in the
           output palette (say, pure black or pure white), then calculates
-          the <em>error</em> — the difference between the original pixel's
+          the <em>error</em> — the difference between the original pixel&apos;s
           brightness and the color it just chose. Instead of discarding that
           error, Floyd-Steinberg diffuses it forward into neighboring pixels
           that haven&apos;t been processed yet, using a fixed set of weights:
@@ -75,7 +75,7 @@ export default function FloydSteinbergGuide() {
         <GuideP>
           Error diffusion beats simple threshold-based dithering (like
           ordered/Bayer dithering) at preserving fine detail and smooth
-          gradients, which is why it's still the default choice for
+          gradients, which is why it&apos;s still the default choice for
           converting photographs to 1-bit images, preparing art for
           e-ink displays and thermal printers, and giving digital art a
           hand-halftoned, print-like texture. Its main tradeoff is that the
