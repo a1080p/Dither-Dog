@@ -1576,7 +1576,15 @@ function hashCell(col: number, row: number, salt: number): number {
   return (h >>> 0) / 4294967296;
 }
 
-/** Average luminance + RGB of a pixel block. */
+/**
+ * Cells this transparent or more are treated as having no image content at
+ * all, regardless of their (often meaningless) RGB values — a fully
+ * transparent PNG pixel commonly decodes with RGB (0,0,0), which would
+ * otherwise read as solid black and get inked like real content.
+ */
+const TRANSPARENT_ALPHA_THRESHOLD = 16;
+
+/** Average luminance + RGB + alpha of a pixel block. */
 function sampleRegion(
   data: Uint8ClampedArray,
   width: number,
@@ -1585,19 +1593,20 @@ function sampleRegion(
   xEnd: number,
   yEnd: number,
   step: number
-): { luminance: number; color: [number, number, number] } {
-  let sumR = 0, sumG = 0, sumB = 0, sumLum = 0, count = 0;
+): { luminance: number; color: [number, number, number]; alpha: number } {
+  let sumR = 0, sumG = 0, sumB = 0, sumA = 0, sumLum = 0, count = 0;
   for (let sy = y; sy < yEnd; sy += step) {
     for (let sx = x; sx < xEnd; sx += step) {
       const idx = (sy * width + sx) * 4;
       const r = data[idx], g = data[idx + 1], b = data[idx + 2];
       sumR += r; sumG += g; sumB += b;
+      sumA += data[idx + 3];
       sumLum += toGrayscale(r, g, b);
       count++;
     }
   }
-  if (count === 0) return { luminance: 255, color: [255, 255, 255] };
-  return { luminance: sumLum / count, color: [sumR / count, sumG / count, sumB / count] };
+  if (count === 0) return { luminance: 255, color: [255, 255, 255], alpha: 0 };
+  return { luminance: sumLum / count, color: [sumR / count, sumG / count, sumB / count], alpha: sumA / count };
 }
 
 /** Ordered-dither ink threshold: true where the region is dark enough to draw, with a soft (non-binary) edge. */
@@ -1648,7 +1657,10 @@ function generateBrailleGrid(imageData: ImageData, params: ProcessingParams): As
           sumLum += sample.luminance;
           count++;
 
-          if (isInked(sample.luminance, params.asciiGridThreshold, row * 4 + dy, col * 2 + dx)) {
+          if (
+            sample.alpha >= TRANSPARENT_ALPHA_THRESHOLD &&
+            isInked(sample.luminance, params.asciiGridThreshold, row * 4 + dy, col * 2 + dx)
+          ) {
             bits |= BRAILLE_DOT_BITS[dy][dx];
           }
         }
@@ -1708,11 +1720,15 @@ export function generateAsciiGrid(imageData: ImageData, params: ProcessingParams
       const y = row * cellSize;
       const xEnd = Math.min(width, x + cellSize);
       const yEnd = Math.min(height, y + cellSize);
-      const { luminance, color } = sampleRegion(data, width, x, y, xEnd, yEnd, sampleStep);
+      const { luminance, color, alpha } = sampleRegion(data, width, x, y, xEnd, yEnd, sampleStep);
       if (xEnd <= x || yEnd <= y) continue;
 
       let char = '';
-      if (params.asciiStyle === 'text') {
+      if (alpha < TRANSPARENT_ALPHA_THRESHOLD) {
+        // No real image content here (e.g. a transparent PNG's background) —
+        // leave the cell empty instead of inking whatever RGB the decoder
+        // left behind (often black).
+      } else if (params.asciiStyle === 'text') {
         if (isInked(luminance, params.asciiGridThreshold, row, col)) {
           const next = phrase[phraseIndex % phrase.length];
           phraseIndex++;
