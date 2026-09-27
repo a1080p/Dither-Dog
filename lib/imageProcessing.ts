@@ -72,12 +72,14 @@ export type ColorPalette =
   | 'sunset-red'
   | 'lavender-sage';
 
+export type AsciiStyle = 'density' | 'grid' | 'braille' | 'text';
+
 export interface ProcessingParams {
   brightness: number;
   contrast: number;
   threshold: number;
   ditherIntensity: number;
-  effect: 'none' | 'dithering' | 'threshold' | 'edge-detect';
+  effect: 'none' | 'dithering' | 'threshold' | 'edge-detect' | 'ascii';
   ditheringAlgorithm: DitheringAlgorithm;
   // Advanced dithering parameters
   invert: boolean;
@@ -92,6 +94,13 @@ export interface ProcessingParams {
   colorPalette: ColorPalette;
   customPrimaryColor: string;
   customSecondaryColor: string;
+  // ASCII art parameters
+  asciiCharacters: string;
+  asciiRandomChars: boolean;
+  asciiStyle: AsciiStyle;
+  asciiCellSize: number;
+  asciiGridThreshold: number;
+  asciiText: string;
 }
 
 // Bayer matrices for ordered dithering
@@ -288,7 +297,7 @@ function applyDepth(imageData: ImageData, depth: number): ImageData {
 /**
  * Invert colors
  */
-function invertColors(imageData: ImageData): ImageData {
+export function invertColors(imageData: ImageData): ImageData {
   const data = new Uint8ClampedArray(imageData.data);
 
   for (let i = 0; i < data.length; i += 4) {
@@ -1366,6 +1375,59 @@ function hexToRgb(hex: string): [number, number, number] {
   ];
 }
 
+const PALETTES: Record<Exclude<ColorPalette, 'full-color' | 'custom'>, { dark: [number, number, number], light: [number, number, number] }> = {
+  // Vibrant
+  'colina-dreams': { dark: [255, 20, 99], light: [206, 255, 60] },
+  'acid-lemon-violet': { dark: [120, 0, 255], light: [255, 255, 40] },
+  'electric-orange-cyan': { dark: [0, 255, 220], light: [255, 110, 0] },
+  'laser-red-blue': { dark: [0, 60, 255], light: [255, 20, 20] },
+  'toxic-magenta-teal': { dark: [0, 200, 180], light: [255, 0, 180] },
+  // Basic
+  'black-white': { dark: [0, 0, 0], light: [255, 255, 255] },
+  'red-black': { dark: [0, 0, 0], light: [255, 0, 0] },
+  'blue-white': { dark: [0, 50, 100], light: [255, 255, 255] },
+  'green-black': { dark: [0, 0, 0], light: [0, 255, 0] },
+  // Retro
+  'sepia': { dark: [64, 32, 16], light: [255, 240, 200] },
+  'gameboy': { dark: [15, 56, 15], light: [155, 188, 15] },
+  'commodore64': { dark: [64, 50, 133], light: [120, 105, 196] },
+  'amber-crt': { dark: [20, 10, 0], light: [255, 176, 0] },
+  'green-terminal': { dark: [0, 20, 0], light: [0, 255, 65] },
+  // Neon
+  'cyan-magenta': { dark: [0, 150, 150], light: [255, 0, 150] },
+  'neon-pink': { dark: [20, 0, 40], light: [255, 16, 240] },
+  'electric-blue': { dark: [0, 0, 50], light: [0, 242, 255] },
+  'lime-purple': { dark: [80, 0, 120], light: [200, 255, 0] },
+  'hot-pink-cyan': { dark: [0, 230, 255], light: [255, 20, 147] },
+  // Vintage
+  'orange-blue': { dark: [0, 50, 100], light: [255, 150, 0] },
+  'purple-yellow': { dark: [80, 0, 120], light: [255, 255, 100] },
+  'teal-orange': { dark: [0, 128, 128], light: [255, 127, 80] },
+  'burgundy-cream': { dark: [80, 0, 32], light: [255, 253, 208] },
+  // Nature
+  'forest-green': { dark: [13, 27, 42], light: [34, 139, 34] },
+  'ocean-blue': { dark: [0, 47, 75], light: [64, 224, 208] },
+  'sunset-red': { dark: [139, 0, 139], light: [255, 99, 71] },
+  'lavender-sage': { dark: [85, 107, 47], light: [230, 230, 250] }
+};
+
+/**
+ * Resolve a color palette to its dark/light RGB pair. Returns null for
+ * 'full-color', which has no fixed pair (colors are read straight from
+ * the source pixels).
+ */
+export function getPaletteColors(
+  palette: ColorPalette,
+  customPrimaryColor: string = '#ff1464',
+  customSecondaryColor: string = '#c8ff3c'
+): { dark: [number, number, number]; light: [number, number, number] } | null {
+  if (palette === 'full-color') return null;
+  if (palette === 'custom') {
+    return { dark: hexToRgb(customPrimaryColor), light: hexToRgb(customSecondaryColor) };
+  }
+  return PALETTES[palette as Exclude<ColorPalette, 'full-color' | 'custom'>];
+}
+
 function applyColorPalette(
   imageData: ImageData,
   palette: ColorPalette,
@@ -1379,45 +1441,7 @@ function applyColorPalette(
     return new ImageData(data, imageData.width, imageData.height);
   }
 
-  const palettes: Record<Exclude<ColorPalette, 'full-color' | 'custom'>, { dark: [number, number, number], light: [number, number, number] }> = {
-    // Vibrant
-    'colina-dreams': { dark: [255, 20, 99], light: [206, 255, 60] },
-    'acid-lemon-violet': { dark: [120, 0, 255], light: [255, 255, 40] },
-    'electric-orange-cyan': { dark: [0, 255, 220], light: [255, 110, 0] },
-    'laser-red-blue': { dark: [0, 60, 255], light: [255, 20, 20] },
-    'toxic-magenta-teal': { dark: [0, 200, 180], light: [255, 0, 180] },
-    // Basic
-    'black-white': { dark: [0, 0, 0], light: [255, 255, 255] },
-    'red-black': { dark: [0, 0, 0], light: [255, 0, 0] },
-    'blue-white': { dark: [0, 50, 100], light: [255, 255, 255] },
-    'green-black': { dark: [0, 0, 0], light: [0, 255, 0] },
-    // Retro
-    'sepia': { dark: [64, 32, 16], light: [255, 240, 200] },
-    'gameboy': { dark: [15, 56, 15], light: [155, 188, 15] },
-    'commodore64': { dark: [64, 50, 133], light: [120, 105, 196] },
-    'amber-crt': { dark: [20, 10, 0], light: [255, 176, 0] },
-    'green-terminal': { dark: [0, 20, 0], light: [0, 255, 65] },
-    // Neon
-    'cyan-magenta': { dark: [0, 150, 150], light: [255, 0, 150] },
-    'neon-pink': { dark: [20, 0, 40], light: [255, 16, 240] },
-    'electric-blue': { dark: [0, 0, 50], light: [0, 242, 255] },
-    'lime-purple': { dark: [80, 0, 120], light: [200, 255, 0] },
-    'hot-pink-cyan': { dark: [0, 230, 255], light: [255, 20, 147] },
-    // Vintage
-    'orange-blue': { dark: [0, 50, 100], light: [255, 150, 0] },
-    'purple-yellow': { dark: [80, 0, 120], light: [255, 255, 100] },
-    'teal-orange': { dark: [0, 128, 128], light: [255, 127, 80] },
-    'burgundy-cream': { dark: [80, 0, 32], light: [255, 253, 208] },
-    // Nature
-    'forest-green': { dark: [13, 27, 42], light: [34, 139, 34] },
-    'ocean-blue': { dark: [0, 47, 75], light: [64, 224, 208] },
-    'sunset-red': { dark: [139, 0, 139], light: [255, 99, 71] },
-    'lavender-sage': { dark: [85, 107, 47], light: [230, 230, 250] }
-  };
-
-  const colors = palette === 'custom'
-    ? { dark: hexToRgb(customPrimaryColor), light: hexToRgb(customSecondaryColor) }
-    : palettes[palette as Exclude<ColorPalette, 'full-color' | 'custom'>];
+  const colors = getPaletteColors(palette, customPrimaryColor, customSecondaryColor)!;
 
   for (let i = 0; i < data.length; i += 4) {
     const gray = toGrayscale(data[i], data[i + 1], data[i + 2]);
@@ -1518,6 +1542,201 @@ function applyDitheringFullColor(
   return new ImageData(merged, width, height);
 }
 
+export interface AsciiCell {
+  col: number;
+  row: number;
+  x: number;
+  y: number;
+  char: string;
+  luminance: number;
+  color: [number, number, number];
+}
+
+export interface AsciiGrid {
+  cols: number;
+  rows: number;
+  cellWidth: number;
+  cellHeight: number;
+  fontSize: number;
+  cells: AsciiCell[];
+}
+
+export const DEFAULT_ASCII_CHARACTERS = '@%#*+=-:. ';
+export const DEFAULT_ASCII_TEXT = 'DITHER DOG  ';
+
+/**
+ * Deterministic per-cell hash (0-1) so "random" character choice stays
+ * stable across re-renders of the same frame instead of flickering every
+ * time an unrelated slider changes.
+ */
+function hashCell(col: number, row: number, salt: number): number {
+  let h = (col * 374761393 + row * 668265263 + salt * 2246822519) | 0;
+  h = (h ^ (h >>> 13)) * 1274126177;
+  h = h ^ (h >>> 16);
+  return (h >>> 0) / 4294967296;
+}
+
+/** Average luminance + RGB of a pixel block. */
+function sampleRegion(
+  data: Uint8ClampedArray,
+  width: number,
+  x: number,
+  y: number,
+  xEnd: number,
+  yEnd: number,
+  step: number
+): { luminance: number; color: [number, number, number] } {
+  let sumR = 0, sumG = 0, sumB = 0, sumLum = 0, count = 0;
+  for (let sy = y; sy < yEnd; sy += step) {
+    for (let sx = x; sx < xEnd; sx += step) {
+      const idx = (sy * width + sx) * 4;
+      const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+      sumR += r; sumG += g; sumB += b;
+      sumLum += toGrayscale(r, g, b);
+      count++;
+    }
+  }
+  if (count === 0) return { luminance: 255, color: [255, 255, 255] };
+  return { luminance: sumLum / count, color: [sumR / count, sumG / count, sumB / count] };
+}
+
+/** Ordered-dither ink threshold: true where the region is dark enough to draw, with a soft (non-binary) edge. */
+function isInked(luminance: number, gridThreshold: number, matrixRow: number, matrixCol: number): boolean {
+  const matrixVal = BAYER_4X4[matrixRow % 4][matrixCol % 4]; // 0-15
+  const jitter = (matrixVal / 15 - 0.5) * 70;
+  const inkThreshold = (gridThreshold / 100) * 255;
+  return luminance < inkThreshold + jitter;
+}
+
+// Braille cells pack an 8-dot matrix (2 cols x 4 rows) into one Unicode
+// codepoint starting at U+2800; each dot maps to a fixed bit.
+const BRAILLE_DOT_BITS = [
+  [0x01, 0x08],
+  [0x02, 0x10],
+  [0x04, 0x20],
+  [0x40, 0x80],
+];
+
+/**
+ * 'braille' style: supersamples each glyph as a 2x4 dot matrix, giving far
+ * higher effective resolution than a single character per cell — the
+ * classic terminal-image-viewer look.
+ */
+function generateBrailleGrid(imageData: ImageData, params: ProcessingParams): AsciiGrid {
+  const { width, height, data } = imageData;
+  const dotSize = Math.max(1, Math.round(params.asciiCellSize / 3));
+  const cellWidth = dotSize * 2;
+  const cellHeight = dotSize * 4;
+  const cols = Math.ceil(width / cellWidth);
+  const rows = Math.ceil(height / cellHeight);
+  const cells: AsciiCell[] = [];
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const x = col * cellWidth;
+      const y = row * cellHeight;
+      let bits = 0;
+      let sumR = 0, sumG = 0, sumB = 0, sumLum = 0, count = 0;
+
+      for (let dy = 0; dy < 4; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          const dotX = x + dx * dotSize;
+          const dotY = y + dy * dotSize;
+          if (dotX >= width || dotY >= height) continue;
+          const sample = sampleRegion(data, width, dotX, dotY, Math.min(width, dotX + dotSize), Math.min(height, dotY + dotSize), 1);
+          sumR += sample.color[0]; sumG += sample.color[1]; sumB += sample.color[2];
+          sumLum += sample.luminance;
+          count++;
+
+          if (isInked(sample.luminance, params.asciiGridThreshold, row * 4 + dy, col * 2 + dx)) {
+            bits |= BRAILLE_DOT_BITS[dy][dx];
+          }
+        }
+      }
+
+      if (count === 0) continue;
+      const luminance = sumLum / count;
+      const color: [number, number, number] = [sumR / count, sumG / count, sumB / count];
+      const char = bits === 0 ? '' : String.fromCharCode(0x2800 + bits);
+
+      cells.push({ col, row, x, y, char, luminance, color });
+    }
+  }
+
+  return { cols, rows, cellWidth, cellHeight, fontSize: cellHeight, cells };
+}
+
+/**
+ * Samples an image into a grid of characters.
+ *
+ * 'density' is classic tonal ASCII art: every cell gets a character chosen
+ * by where its average brightness falls along `characters` (read
+ * dark -> light, so the default ramp starts solid and ends blank).
+ *
+ * 'grid' only draws a fixed glyph where the image is dark enough, with an
+ * ordered-dither threshold so the cutoff isn't a hard edge — the
+ * stencil/silhouette look of grid-based ASCII art.
+ *
+ * 'text' works like 'grid', but instead of a repeated glyph it flows a
+ * user-supplied phrase through the inked cells in reading order, so the
+ * image is drawn out of its own repeating text (a "word-art" portrait).
+ *
+ * 'braille' delegates to generateBrailleGrid for its 2x4 dot-matrix glyphs.
+ *
+ * When `asciiRandomChars` is on ('density'/'grid' only), the character
+ * itself (not the fill decision) is picked from `characters` at random.
+ */
+export function generateAsciiGrid(imageData: ImageData, params: ProcessingParams): AsciiGrid {
+  if (params.asciiStyle === 'braille') {
+    return generateBrailleGrid(imageData, params);
+  }
+
+  const { width, height, data } = imageData;
+  const cellSize = Math.max(4, Math.floor(params.asciiCellSize));
+  const cols = Math.ceil(width / cellSize);
+  const rows = Math.ceil(height / cellSize);
+  const characters = params.asciiCharacters.length > 0 ? params.asciiCharacters : DEFAULT_ASCII_CHARACTERS;
+  const solidChar = characters.trim().charAt(0) || '#';
+  const phrase = params.asciiText.length > 0 ? params.asciiText : DEFAULT_ASCII_TEXT;
+  const sampleStep = cellSize > 8 ? 2 : 1;
+  const cells: AsciiCell[] = [];
+  let phraseIndex = 0;
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const x = col * cellSize;
+      const y = row * cellSize;
+      const xEnd = Math.min(width, x + cellSize);
+      const yEnd = Math.min(height, y + cellSize);
+      const { luminance, color } = sampleRegion(data, width, x, y, xEnd, yEnd, sampleStep);
+      if (xEnd <= x || yEnd <= y) continue;
+
+      let char = '';
+      if (params.asciiStyle === 'text') {
+        if (isInked(luminance, params.asciiGridThreshold, row, col)) {
+          const next = phrase[phraseIndex % phrase.length];
+          phraseIndex++;
+          char = next === ' ' ? '' : next;
+        }
+      } else if (params.asciiStyle === 'grid') {
+        if (isInked(luminance, params.asciiGridThreshold, row, col)) {
+          char = params.asciiRandomChars
+            ? characters[Math.floor(hashCell(col, row, 1) * characters.length)]
+            : solidChar;
+        }
+      } else {
+        char = params.asciiRandomChars
+          ? characters[Math.floor(hashCell(col, row, 2) * characters.length)]
+          : characters[Math.min(characters.length - 1, Math.floor((luminance / 255) * characters.length))];
+      }
+
+      cells.push({ col, row, x, y, char, luminance, color });
+    }
+  }
+
+  return { cols, rows, cellWidth: cellSize, cellHeight: cellSize, fontSize: cellSize, cells };
+}
+
 /**
  * Main processing pipeline
  */
@@ -1600,6 +1819,11 @@ export function processImage(
       break;
     case 'edge-detect':
       processed = applyEdgeDetection(processed);
+      break;
+    case 'ascii':
+      if (params.invert) {
+        processed = invertColors(processed);
+      }
       break;
     case 'none':
     default:

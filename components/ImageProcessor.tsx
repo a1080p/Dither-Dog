@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import NextImage from 'next/image';
 import { parseGIF, decompressFrames } from 'gifuct-js';
-import { processImage, type ProcessingParams, type DitheringAlgorithm, type ColorPalette } from '@/lib/imageProcessing';
+import { processImage, generateAsciiGrid, getPaletteColors, type ProcessingParams, type DitheringAlgorithm, type ColorPalette, type AsciiStyle } from '@/lib/imageProcessing';
 import ColorWheelPicker from '@/components/ColorWheelPicker';
 
 type Preset = {
@@ -398,6 +398,66 @@ const presets: Preset[] = [
   },
 ];
 
+const asciiStylePresets: Preset[] = [
+  {
+    name: 'Matrix Rain',
+    params: {
+      effect: 'ascii',
+      asciiStyle: 'grid',
+      asciiCharacters: 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ0123456789',
+      asciiRandomChars: true,
+      asciiCellSize: 10,
+      asciiGridThreshold: 60,
+      // 'green-terminal' is graded shadow(dark)->highlight(light), which
+      // would put bright green on the BACKGROUND and near-black on the
+      // ink — the opposite of the "green code on a black screen" look.
+      // Custom colors sidestep that: ink always takes the dark swatch and
+      // background the light one, so setting them explicitly gets the
+      // classic Matrix palette regardless of that convention.
+      colorPalette: 'custom',
+      customPrimaryColor: '#00ff66',
+      customSecondaryColor: '#010a02',
+      invert: false,
+    }
+  },
+  {
+    name: 'Fine Braille',
+    params: {
+      effect: 'ascii',
+      asciiStyle: 'braille',
+      asciiCellSize: 9,
+      asciiGridThreshold: 55,
+      colorPalette: 'black-white',
+      invert: false,
+    }
+  },
+  {
+    name: 'Word Art',
+    params: {
+      effect: 'ascii',
+      asciiStyle: 'text',
+      asciiText: 'DITHER DOG  ',
+      asciiCellSize: 9,
+      asciiGridThreshold: 55,
+      colorPalette: 'full-color',
+      invert: false,
+    }
+  },
+  {
+    name: 'Manga Screentone',
+    params: {
+      effect: 'ascii',
+      asciiStyle: 'grid',
+      asciiCharacters: '●•.',
+      asciiRandomChars: true,
+      asciiCellSize: 7,
+      asciiGridThreshold: 50,
+      colorPalette: 'black-white',
+      invert: false,
+    }
+  },
+];
+
 type MediaType = 'image' | 'video' | 'gif' | null;
 
 const VIDEO_FRAME_DURATION = 1 / 30; // approximate single-frame step at 30fps
@@ -519,6 +579,12 @@ export default function ImageProcessor() {
     colorPalette: 'full-color',
     customPrimaryColor: '#ff1464',
     customSecondaryColor: '#c8ff3c',
+    asciiCharacters: '@%#*+=-:. ',
+    asciiRandomChars: false,
+    asciiStyle: 'density',
+    asciiCellSize: 10,
+    asciiGridThreshold: 55,
+    asciiText: 'DITHER DOG  ',
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -764,7 +830,44 @@ export default function ImageProcessor() {
       output.width = source.width;
       output.height = source.height;
     }
-    outputCtx.putImageData(processed, 0, 0);
+
+    if (params.effect === 'ascii') {
+      // Brightness/contrast/invert/palette color are already baked into
+      // `processed` by processImage above — the grid just samples that.
+      const grid = generateAsciiGrid(processed, params);
+      const resolvedPalette = getPaletteColors(params.colorPalette, params.customPrimaryColor, params.customSecondaryColor);
+      const rgbCss = (c: [number, number, number]) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+
+      // 'grid'/'text'/'braille' are two-tone stencils: every inked cell is,
+      // by construction, a low-luminance sample — so coloring it from the
+      // same luminance->palette gradient used for the background would
+      // always land near the palette's "dark" swatch, making bright-ink
+      // palettes (e.g. green-terminal) impossible to render with contrast.
+      // Instead give these styles a flat ink/background swatch pair, and
+      // let `invert` swap which one is which.
+      const isTwoTone = params.asciiStyle === 'grid' || params.asciiStyle === 'text' || params.asciiStyle === 'braille';
+
+      const backgroundColor = resolvedPalette
+        ? rgbCss(params.invert ? resolvedPalette.dark : resolvedPalette.light)
+        : (params.invert ? '#000000' : '#ffffff');
+      const flatInkColor = resolvedPalette && isTwoTone
+        ? rgbCss(params.invert ? resolvedPalette.light : resolvedPalette.dark)
+        : null;
+
+      outputCtx.fillStyle = backgroundColor;
+      outputCtx.fillRect(0, 0, output.width, output.height);
+      outputCtx.textBaseline = 'top';
+      outputCtx.textAlign = 'left';
+      outputCtx.font = `${grid.fontSize}px monospace`;
+
+      for (const cell of grid.cells) {
+        if (!cell.char || cell.char === ' ') continue;
+        outputCtx.fillStyle = flatInkColor ?? rgbCss(cell.color);
+        outputCtx.fillText(cell.char, cell.x, cell.y);
+      }
+    } else {
+      outputCtx.putImageData(processed, 0, 0);
+    }
   }, [params]);
 
   const handleVideoLoadedMetadata = useCallback(() => {
@@ -1163,6 +1266,14 @@ export default function ImageProcessor() {
     }
   };
 
+  const applyAsciiStylePreset = (presetName: string) => {
+    const preset = asciiStylePresets.find(p => p.name === presetName);
+    if (preset) {
+      setParams((prev) => ({ ...prev, ...preset.params }));
+      setSelectedPreset('Custom');
+    }
+  };
+
   // Opening /workspace?preset=<name> (e.g. from a homepage preset card) loads
   // a stand-in test photo so the preset has something to preview.
   useEffect(() => {
@@ -1435,6 +1546,7 @@ export default function ImageProcessor() {
               >
                 <option value="none">None</option>
                 <option value="dithering">Dithering</option>
+                <option value="ascii">ASCII Art</option>
                 <option value="threshold">Threshold</option>
                 <option value="edge-detect">Edge Detection</option>
               </select>
@@ -1582,6 +1694,101 @@ export default function ImageProcessor() {
                         </select>
               </div>
             )}
+
+            {/* ASCII Art Controls */}
+            {params.effect === 'ascii' && (
+              <>
+                <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                  <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                    Quick styles
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {asciiStylePresets.map((preset) => (
+                      <button
+                        key={preset.name}
+                        onClick={() => applyAsciiStylePreset(preset.name)}
+                        className="px-2 py-2 text-[0.7rem] font-bold rounded-none transition-all duration-300 cursor-pointer active:scale-[0.97] glass-panel text-white/70 border border-white/10 hover:text-white hover:border-white/25 hover:bg-white/[0.04]"
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                  <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                    ASCII style
+                  </label>
+                  <select
+                    value={params.asciiStyle}
+                    onChange={(e) => updateParam('asciiStyle', e.target.value as AsciiStyle)}
+                    className="w-full px-3 py-2 text-sm glass-input text-white font-semibold rounded-none focus:outline-none"
+                  >
+                    <option value="density">Density (tonal ASCII art)</option>
+                    <option value="grid">Grid (silhouette / stencil)</option>
+                    <option value="braille">Braille (fine dot matrix)</option>
+                    <option value="text">Text / Word Art</option>
+                  </select>
+                </div>
+
+                {params.asciiStyle === 'text' ? (
+                  <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                    <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                      Phrase
+                    </label>
+                    <input
+                      type="text"
+                      value={params.asciiText}
+                      onChange={(e) => updateParam('asciiText', e.target.value)}
+                      placeholder="DITHER DOG"
+                      className="w-full px-3 py-2 text-sm glass-input text-white font-mono rounded-none focus:outline-none"
+                    />
+                    <p className="text-[0.65rem] text-white/50 font-medium" style={{ marginTop: '0.25rem' }}>
+                      Repeats through the image&apos;s dark areas, reading in order. Trailing spaces add a gap between repeats.
+                    </p>
+                  </div>
+                ) : params.asciiStyle === 'braille' ? (
+                  <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                    <p className="text-[0.65rem] text-white/50 font-medium">
+                      Each glyph packs a 2×4 dot grid, so Braille reads at much finer detail than a single character per cell.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ padding: '0 2rem', marginBottom: '0.5rem' }}>
+                      <label className="block text-xs font-bold text-white" style={{ marginBottom: '0.25rem' }}>
+                        Characters
+                      </label>
+                      <input
+                        type="text"
+                        value={params.asciiCharacters}
+                        onChange={(e) => updateParam('asciiCharacters', e.target.value)}
+                        placeholder="@%#*+=-:. "
+                        className="w-full px-3 py-2 text-sm glass-input text-white font-mono rounded-none focus:outline-none"
+                      />
+                      <p className="text-[0.65rem] text-white/50 font-medium" style={{ marginTop: '0.25rem' }}>
+                        {params.asciiStyle === 'density'
+                          ? 'Ordered darkest → lightest. The last character (often a space) leaves a cell blank.'
+                          : 'The first character is used as the ink glyph. Add more to pull from with Randomize.'}
+                      </p>
+                    </div>
+
+                    <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                      <button
+                        onClick={() => updateParam('asciiRandomChars', !params.asciiRandomChars)}
+                        className={`w-full px-4 py-3 text-sm font-bold rounded-none transition-all duration-300 cursor-pointer active:scale-[0.97] ${
+                          params.asciiRandomChars
+                            ? 'glass-button-primary text-white'
+                            : 'glass-panel text-white/60 border border-white/10 hover:text-white hover:border-white/25 hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        {params.asciiRandomChars ? 'Randomize Characters: On' : 'Randomize Characters: Off'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </AccordionSection>
 
           <AccordionSection id="adjustments" title="Adjustments">
@@ -1602,6 +1809,31 @@ export default function ImageProcessor() {
               max={50}
               step={1}
             />
+
+            {/* ASCII Art Controls Section */}
+            {params.effect === 'ascii' && (
+              <>
+                <SliderControl
+                  label={params.asciiStyle === 'braille' ? 'Dot size' : 'Cell size'}
+                  value={params.asciiCellSize}
+                  onChange={(v) => updateParam('asciiCellSize', v)}
+                  min={4}
+                  max={32}
+                  step={1}
+                />
+
+                {(params.asciiStyle === 'grid' || params.asciiStyle === 'text' || params.asciiStyle === 'braille') && (
+                  <SliderControl
+                    label="Ink coverage"
+                    value={params.asciiGridThreshold}
+                    onChange={(v) => updateParam('asciiGridThreshold', v)}
+                    min={5}
+                    max={95}
+                    step={1}
+                  />
+                )}
+              </>
+            )}
 
             {/* Threshold Section */}
             {params.effect === 'threshold' && (
